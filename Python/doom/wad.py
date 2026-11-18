@@ -37,7 +37,8 @@ class Wad:
         for x in range(w):
             p = struct.unpack_from("<I", data, 8 + x * 4)[0]
             while data[p] != 255:
-                y, length = data[p : p + 2]
+                post = data[p : p + 2]
+                y, length = post
                 for j, c in enumerate(data[p + 3 : p + 3 + length]):
                     if y + j < h:
                         k = ((y + j) * w + x) * 4
@@ -244,7 +245,8 @@ def mus_to_midi(data: bytes) -> bytes:
             p += 1
             payload = bytes((0xB0 | channel, controls[control], 0))
         elif kind == 4:
-            control, value = data[p : p + 2]
+            pair = data[p : p + 2]
+            control, value = pair
             p += 2
             payload = (
                 bytes((0xC0 | channel, value & 127))

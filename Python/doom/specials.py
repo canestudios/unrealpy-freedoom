@@ -225,7 +225,7 @@ def plan(mode: Any) -> None:
     # All floors get their own native mesh group: stairs/donut propagation can reach untagged sectors.
     for i, sector in enumerate(sectors):
         neighbours = mode.neighbours(i)
-        low = min([sector["floor"], *(sectors[n]["floor"] for n in neighbours)])
+        low = min([sector["floor"]] + [sectors[n]["floor"] for n in neighbours])
         mode.movers[i] = dict(
             actor=None,
             kind="floor",
@@ -350,7 +350,7 @@ def activate(mode: Any, index: int, activation: str = "use", who: Any = None) ->
             )
             if special == 40:
                 mover = mode.movers[i]
-                mover.update(goal=min([base, *floors]) - base, active=True)
+                mover.update(goal=min([base] + floors) - base, active=True)
         elif action == "stairs":
             build_stairs(mode, i, 16 if special in (100, 127) else 8)
         elif action == "donut":
@@ -366,7 +366,7 @@ def activate(mode: Any, index: int, activation: str = "use", who: Any = None) ->
             if action == "floor_lower":
                 target = max([f for f in floors if f < base], default=base)
             elif action in ("floor_lowest", "floor_change_lower", "lift", "perpetual_lift"):
-                target = min([base, *floors])
+                target = min([base] + floors)
             elif action == "floor_turbo_lower":
                 target = max([f for f in floors if f < base], default=base)
                 if target != base:
@@ -374,7 +374,7 @@ def activate(mode: Any, index: int, activation: str = "use", who: Any = None) ->
             elif action in ("floor_next", "floor_turbo_raise"):
                 target = min([f for f in floors if f > base], default=base)
             elif action in ("floor_raise", "floor_crush"):
-                target = min([sector["ceiling"], *ceilings]) - (8 if action == "floor_crush" else 0)
+                target = min([sector["ceiling"]] + ceilings) - (8 if action == "floor_crush" else 0)
             elif action in ("floor_24", "floor_32"):
                 target = base + (24 if action == "floor_24" else 32)
             elif action == "floor_texture":
@@ -398,7 +398,7 @@ def activate(mode: Any, index: int, activation: str = "use", who: Any = None) ->
                 else 140.0
                 if special in FAST or action == "lift"
                 else 35.0,
-                high=max([base, *floors]) - base,
+                high=max([base] + floors) - base,
                 wait=0.0,
             )
             mode.sound("DSPSTART" if action == "lift" else "DSSTNMOV")
@@ -615,5 +615,5 @@ def boss_death(mode: Any, enemy: Any) -> None:
             mode.open_door(i)
             mode.doors[i]["timer"] = math.inf
         else:
-            lowest = min([sector["floor"], *(s["floor"] for s in neighbours(mode, i))])
+            lowest = min([sector["floor"]] + [s["floor"] for s in neighbours(mode, i)])
             mode.movers[i].update(goal=lowest - sector["floor"], target=lowest - sector["floor"], active=True)

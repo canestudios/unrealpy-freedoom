@@ -401,7 +401,7 @@ class DoomDemon(ue.Character):
         self.facing = math.degrees(math.atan2(py - y, px - x))
         if self.prefix == "SKUL":
             direction = target.get_actor_location() - self.get_actor_location()
-            direction /= max(1.0, float(sum(float(v) ** 2 for v in direction)) ** 0.5)
+            direction /= max(1.0, math.sqrt(sum(float(v) ** 2 for v in direction)))
             self.charge_direction = [float(v) for v in direction]
             self.charge_time = 2.0
             return
@@ -422,7 +422,7 @@ class DoomDemon(ue.Character):
             bolt = ue.spawn_actor(projectiles.DoomProjectile, location=self.get_actor_location().copy())
             aim = target.get_actor_location().copy()
             direction = aim - self.get_actor_location()
-            direction /= max(1.0, float(sum(float(v) ** 2 for v in direction)) ** 0.5)
+            direction /= max(1.0, math.sqrt(sum(float(v) ** 2 for v in direction)))
             # Missile speeds, map units a tic: imp and cacodemon balls 10, baron 15 (doubled on Nightmare),
             # rocket 20.
             speed = 700 if self.prefix == "CYBR" else (525 if self.prefix == "BOSS" else 350)
