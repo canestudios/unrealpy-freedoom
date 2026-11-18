@@ -1,0 +1,33 @@
+# Unreal
+Binaries/
+Intermediate/
+Saved/
+DerivedDataCache/
+# Written by packaging (the cooker's file open order)
+/Build/*/FileOpenOrder/
+# Per-user editor folders
+/Content/Developers/
+/Content/Collections/
+*.sln
+*.slnx
+.vs/
+.vscode/
+
+# ScriptCore and UnrealPy are distributed separately and installed here; they are not part of this repository
+/Plugins/*
+!/Plugins/README.md
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Doom data is never committed: WADs and everything extracted or imported from them
+/wads/
+/Python/doom_local*/
+/Content/DoomLocal/
+/Content/FreedoomLocal/
+*.wad
+*.WAD
