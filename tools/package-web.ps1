@@ -43,6 +43,9 @@ if ($LASTEXITCODE) { throw "Writing the function metadata failed (Saved\Logs)." 
 Get-ChildItem (Join-Path $root "Intermediate\Build") -Recurse -Filter Makefile.bin -ErrorAction SilentlyContinue |
     Where-Object { $_.FullName -match "\\Wasm\\" } | Remove-Item
 
+# Archiving copies into the folder without emptying it: a file an earlier build staged would stay on the site.
+Remove-Item (Join-Path $Output "Wasm") -Recurse -Force -ErrorAction SilentlyContinue
+
 # Python/ is staged except the retail data set and what the import alone reads (the game uses the imported
 # assets): the maps' JSON, the names and the textures stay (the game reads the sky textures' top colour; the
 # others cost hosting space only, as the page downloads a file when it is first read).
