@@ -43,6 +43,10 @@ if (-not $emsdk) { throw "Set WASM_EMSDK_ROOT or EMSDK to the Unreal Wasm SDK." 
 & $python -I -B $compiler --project-dir $root --engine-dir $Engine --configuration $Config --emsdk $emsdk
 if ($LASTEXITCODE) { throw "Preparing the Wasm Python library failed ($LASTEXITCODE)." }
 
+# Archiving copies into the folder without emptying it, and UnrealPy prunes only its own Python trees there: any other
+# file an earlier build staged would stay on the site.
+Remove-Item (Join-Path $Output "Wasm") -Recurse -Force -ErrorAction SilentlyContinue
+
 & $uat -WaitForUATMutex "-ScriptsForProject=$project" BuildCookRun "-project=$project" -platform=Wasm "-clientconfig=$Config" `
     -build -cook -stage -pak -iostore -package -archive "-archivedirectory=$Output" -nop4 -utf8output -unattended -NoDebugInfo
 if ($LASTEXITCODE) { throw "BuildCookRun failed ($LASTEXITCODE); see the UAT log above." }
