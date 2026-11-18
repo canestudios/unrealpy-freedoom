@@ -15,7 +15,6 @@ param(
 $ErrorActionPreference = "Stop"
 $root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $project = Join-Path $root "UnrealPyDoom.uproject"
-$editor = Join-Path $Engine "Engine\Binaries\Win64\UnrealEditor-Cmd.exe"
 $uat = Join-Path $Engine "Engine\Build\BatchFiles\RunUAT.bat"
 
 if (-not (Test-Path (Join-Path $root "Python\doom_local_freedoom1\manifest.json"))) {
@@ -35,28 +34,18 @@ $env:UV_PROJECT_ENVIRONMENT = Join-Path $root "Intermediate\UnrealPy\RuntimeVenv
 try { & $uv sync --project $root --no-dev --frozen --quiet; if ($LASTEXITCODE) { throw "uv sync failed" } }
 finally { Remove-Item Env:UV_PROJECT_ENVIRONMENT }
 
-# What cooking strips from the engine's functions (parameter defaults), written by the editor; the build stages it.
-& $editor $project -nullrhi -unattended -nosplash -nopause "-UnrealPyRun=ue._packaging:write_metadata" | Out-Null
-if ($LASTEXITCODE) { throw "Writing the function metadata failed (Saved\Logs)." }
+# Build the project-specific archive first. UBT uses its generation pointer as a makefile dependency.
+$python = Join-Path $Engine "Engine\Binaries\ThirdParty\Python3\Win64\python.exe"
+$compiler = Join-Path $root "Plugins\UnrealPy\Tools\NativePython\unrealpy_wasm.py"
+$emsdk = $env:WASM_EMSDK_ROOT
+if (-not $emsdk) { $emsdk = $env:EMSDK }
+if (-not $emsdk) { throw "Set WASM_EMSDK_ROOT or EMSDK to the Unreal Wasm SDK." }
+& $python -I -B $compiler --project-dir $root --engine-dir $Engine --configuration $Config --emsdk $emsdk
+if ($LASTEXITCODE) { throw "Preparing the Wasm Python library failed ($LASTEXITCODE)." }
 
-# The build lists the files to stage when it makes the target's makefile: drop it so the list is taken now.
-Get-ChildItem (Join-Path $root "Intermediate\Build") -Recurse -Filter Makefile.bin -ErrorAction SilentlyContinue |
-    Where-Object { $_.FullName -match "\\Wasm\\" } | Remove-Item
-
-# Archiving copies into the folder without emptying it: a file an earlier build staged would stay on the site.
-Remove-Item (Join-Path $Output "Wasm") -Recurse -Force -ErrorAction SilentlyContinue
-
-# Python/ is staged except the retail data set and what the import alone reads (the game uses the imported
-# assets: sounds, sprites and the rendered music): the maps' JSON, the names and the textures stay (the game reads
-# the sky textures' top colour; the others cost hosting space only, as the page downloads a file when it is first
-# read).
-$env:UNREALPY_STAGE_EXCLUDE = "doom_local;doom_local_freedoom1/sounds;doom_local_freedoom1/sprites;doom_local_freedoom1/music;doom_local_freedoom1/saves"
-try {
-    & $uat BuildCookRun "-project=$project" -platform=Wasm "-clientconfig=$Config" -build -cook -stage -pak -iostore `
-        -package -archive "-archivedirectory=$Output" -nop4 -utf8output -unattended
-    if ($LASTEXITCODE) { throw "BuildCookRun failed ($LASTEXITCODE); see the UAT log above." }
-}
-finally { Remove-Item Env:UNREALPY_STAGE_EXCLUDE }
+& $uat -WaitForUATMutex "-ScriptsForProject=$project" BuildCookRun "-project=$project" -platform=Wasm "-clientconfig=$Config" `
+    -build -cook -stage -pak -iostore -package -archive "-archivedirectory=$Output" -nop4 -utf8output -unattended -NoDebugInfo
+if ($LASTEXITCODE) { throw "BuildCookRun failed ($LASTEXITCODE); see the UAT log above." }
 
 $site = Join-Path $Output "Wasm"
 # Cooked assets sit inside the containers, so the cook output is checked as well as the staged loose files.
