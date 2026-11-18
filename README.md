@@ -23,6 +23,14 @@ extracted from a WAD you own (or the free Freedoom) at import time into git-igno
   repository: copy them into `Plugins/` (`Plugins/UnrealPy`, `Plugins/ScriptCore`) or install them into the engine.
 - A WAD (below).
 
+The project turns Unreal's engine plugins off by default (`DisableEnginePluginsByDefault` in `UnrealPyDoom.uproject`)
+and enables only what the game uses: procedural meshes for the levels, Enhanced Input, the animation compression
+the engine expects, the network driver for co-op on desktop, each platform's device profile selector, and in the
+editor the asset scripting the importer uses, the Content Browser's asset view and Cascade (the engine's renderer
+settings expect its console variables, and cooking fails without them). The other plugins cost download
+size and are never touched (the web build's code is about 40% smaller this way), so the editor opens without most
+of the tools a new project shows.
+
 Open `UnrealPyDoom.uproject` in the editor once. On that first start UnrealPy creates the Python environment
 (`.venv`, from `pyproject.toml` and `uv.lock`; it needs internet once) and the `ue` type stubs that editors and the
 unit tests use.
