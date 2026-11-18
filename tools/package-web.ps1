@@ -47,9 +47,10 @@ Get-ChildItem (Join-Path $root "Intermediate\Build") -Recurse -Filter Makefile.b
 Remove-Item (Join-Path $Output "Wasm") -Recurse -Force -ErrorAction SilentlyContinue
 
 # Python/ is staged except the retail data set and what the import alone reads (the game uses the imported
-# assets): the maps' JSON, the names and the textures stay (the game reads the sky textures' top colour; the
-# others cost hosting space only, as the page downloads a file when it is first read).
-$env:UNREALPY_STAGE_EXCLUDE = "doom_local;doom_local_freedoom1/sounds;doom_local_freedoom1/sprites;doom_local_freedoom1/saves"
+# assets: sounds, sprites and the rendered music): the maps' JSON, the names and the textures stay (the game reads
+# the sky textures' top colour; the others cost hosting space only, as the page downloads a file when it is first
+# read).
+$env:UNREALPY_STAGE_EXCLUDE = "doom_local;doom_local_freedoom1/sounds;doom_local_freedoom1/sprites;doom_local_freedoom1/music;doom_local_freedoom1/saves"
 try {
     & $uat BuildCookRun "-project=$project" -platform=Wasm "-clientconfig=$Config" -build -cook -stage -pak -iostore `
         -package -archive "-archivedirectory=$Output" -nop4 -utf8output -unattended
