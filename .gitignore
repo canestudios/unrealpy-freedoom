@@ -3,8 +3,9 @@ Binaries/
 Intermediate/
 Saved/
 DerivedDataCache/
-# Written by packaging (the cooker's file open order)
+# Written by packaging (the cooker's file open order, the chunk layers)
 /Build/*/FileOpenOrder/
+/Build/*/ChunkLayerInfo/
 # Per-user editor folders
 /Content/Developers/
 /Content/Collections/
