@@ -370,7 +370,10 @@ The classes are found through the `doom` class package (`Config/DefaultUnrealPy.
 ## Web build (Unreal Engine 5.9, Wasm)
 
 The game also runs in a browser: Unreal Engine 5.9's WebAssembly target, with UnrealPy's web Python (CPython
-and NumPy compiled to WebAssembly and linked into the game). Only the Freedoom data set is packaged.
+and NumPy compiled to WebAssembly and linked into the game). Only the Freedoom data set is packaged. The web
+Python is prebuilt: the packaging command downloads the release UnrealPy pins, from
+[canestudios/cpython-emscripten-static](https://github.com/canestudios/cpython-emscripten-static), the first time it
+runs, so neither WSL nor a Linux machine is needed.
 
 Once per machine: Unreal Engine 5.9 with the Wasm platform, Visual Studio with the C++ workload, and the Emscripten
 SDK version the engine requires (6.0.10), with `WASM_EMSDK_ROOT` pointing at it:

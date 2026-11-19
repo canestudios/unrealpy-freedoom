@@ -4,8 +4,9 @@ Packages the web (Wasm) build of Doom on UnrealPy into <Output>\Wasm, ready to u
 
 .DESCRIPTION
 Needs Unreal Engine 5.9 with the Wasm platform, the Emscripten SDK the engine asks for (README.md, Web build),
-UnrealPy built with its web Python, and the Freedoom data set imported. Only Freedoom is packaged: the retail
-data set is never staged, and the script fails if any of it reaches the output.
+and the Freedoom data set imported. UnrealPy's web Python (CPython and NumPy for Wasm) is downloaded and installed
+by the plugin's Wasm step below the first time. Only Freedoom is packaged: the retail data set is never staged,
+and the script fails if any of it reaches the output.
 #>
 param(
     [string]$Engine = "C:\Program Files\Epic Games\UE_5.9",
@@ -34,7 +35,8 @@ $env:UV_PROJECT_ENVIRONMENT = Join-Path $root "Intermediate\UnrealPy\RuntimeVenv
 try { & $uv sync --project $root --no-dev --frozen --quiet; if ($LASTEXITCODE) { throw "uv sync failed" } }
 finally { Remove-Item Env:UV_PROJECT_ENVIRONMENT }
 
-# Build the project-specific archive first. UBT uses its generation pointer as a makefile dependency.
+# Install the pinned web Python, then build the project-specific archive. UBT uses its generation pointer as a
+# makefile dependency.
 $python = Join-Path $Engine "Engine\Binaries\ThirdParty\Python3\Win64\python.exe"
 $compiler = Join-Path $root "Plugins\UnrealPy\Tools\NativePython\unrealpy_wasm.py"
 $emsdk = $env:WASM_EMSDK_ROOT
