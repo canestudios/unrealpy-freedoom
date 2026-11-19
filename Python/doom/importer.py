@@ -411,7 +411,7 @@ def lit_material(tools: ue.AssetTools, name: str) -> None:
 
 
 def visual_materials(tools: ue.AssetTools) -> None:
-    """Scene-colour fuzz and inverted monochrome invulnerability, both unlit."""
+    """Darkening fuzz and inverted monochrome invulnerability, both unlit."""
     edit = ue.MaterialEditingLibrary
     for name in ("M_Fuzz", "M_Invulnerability"):
         mat = ue.load_object(CONTENT + "/" + name)
@@ -428,9 +428,6 @@ def visual_materials(tools: ue.AssetTools) -> None:
             )
             tex.parameter_name = "DoomTexture"
             tex.texture = ue.load_object(CONTENT + "/sprites/SARGA1")
-            scene: Any = edit.create_material_expression(mat, ue.MaterialExpressionSceneColor, -800, -300)
-            scene.input_mode = ue.EMaterialSceneAttributeInputMode.OffsetFraction
-            scene.const_input = ue.Vector2D(0, 0.003)
             # Animated world-space noise breaks the outline into moving fuzzy fragments.
             time = edit.create_material_expression(mat, ue.MaterialExpressionTime, -1000, 400)
             rate: Any = edit.create_material_expression(mat, ue.MaterialExpressionConstant, -1000, 600)
@@ -449,19 +446,20 @@ def visual_materials(tools: ue.AssetTools) -> None:
             noise.output_min = 0.3
             noise.output_max = 0.65
             assert edit.connect_material_expressions(moving, "", noise, "")
-            # Vanilla fuzz is opaque over the silhouette: the pixels behind it, shifted and darkened
-            # (colormap 6). Darkening the scene sample, not fading the sprite, is what makes it visible.
-            shade = edit.create_material_expression(mat, ue.MaterialExpressionMultiply, -300, -200)
-            assert edit.connect_material_expressions(scene, "", shade, "A")
-            assert edit.connect_material_expressions(noise, "", shade, "B")
-            assert edit.connect_material_property(shade, "", ue.EMaterialProperty.MP_EmissiveColor)
-            opacity = tex
+            # Vanilla fuzz shows the pixels behind the silhouette, darkened (colormap 6). Black (no emissive)
+            # at opacity 1 - noise leaves noise x the colour behind, without reading the scene colour, which
+            # the mobile forward renderer of the web build cannot do.
+            darkness = edit.create_material_expression(mat, ue.MaterialExpressionOneMinus, -200, 500)
+            assert edit.connect_material_expressions(noise, "", darkness, "")
             uv, inside = sprite_uv(mat)
             assert edit.connect_material_expressions(uv, "", tex, "")
-            masked_opacity: Any = edit.create_material_expression(mat, ue.MaterialExpressionMultiply, 0, 200)
-            assert edit.connect_material_expressions(opacity, "A", masked_opacity, "A")
-            assert edit.connect_material_expressions(inside, "", masked_opacity, "B")
-            assert edit.connect_material_property(masked_opacity, "", ue.EMaterialProperty.MP_Opacity)
+            silhouette: Any = edit.create_material_expression(mat, ue.MaterialExpressionMultiply, 0, 200)
+            assert edit.connect_material_expressions(tex, "A", silhouette, "A")
+            assert edit.connect_material_expressions(inside, "", silhouette, "B")
+            opacity = edit.create_material_expression(mat, ue.MaterialExpressionMultiply, 200, 300)
+            assert edit.connect_material_expressions(silhouette, "", opacity, "A")
+            assert edit.connect_material_expressions(darkness, "", opacity, "B")
+            assert edit.connect_material_property(opacity, "", ue.EMaterialProperty.MP_Opacity)
         else:
             mat.material_domain = ue.EMaterialDomain.MD_PostProcess
             mat.is_blendable = True
