@@ -81,11 +81,6 @@ ITEMS = {
     2046: "BROKA0",
     2023: "PSTRA0",
 }
-DEMONS = {
-    3004: ("POSS", 20, "DSPISTOL"),
-    9: ("SPOS", 30, "DSSHOTGN"),
-    3001: ("TROO", 60, "DSFIRSHT"),
-}
 DECOR = {
     2035: "BAR1A0",
     2028: "COLUA0",
