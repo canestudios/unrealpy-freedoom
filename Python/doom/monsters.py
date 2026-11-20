@@ -459,8 +459,6 @@ class DoomDemon(ue.Character):
         self.clock += delta_seconds
         if self.grudge > 0:
             self.grudge = max(0.0, self.grudge - delta_seconds)
-        x, y = xy(self)
-        px, py = xy(player)
         if self.dead and self.gibbed:
             self.image("POL5A0")  # gibs can still come back on Nightmare, below
             if (

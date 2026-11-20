@@ -104,8 +104,7 @@ class DoomProjectile(DoomSprite):
         if mode is None or mode.paused or not hasattr(self, "speed"):
             return
         self.age += delta_seconds
-        family = getattr(self, "family", projectile_family(self.key, self.weapon))
-        flight, impact = PROJECTILE_STATES[family]
+        flight, impact = PROJECTILE_STATES[self.family]
         if self.stage == "explosion":
             if self.weapon == "bfg" and not self.sprayed and self.age >= 16 * TIC:
                 self.sprayed = True
