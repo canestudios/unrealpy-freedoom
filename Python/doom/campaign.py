@@ -364,6 +364,8 @@ def load_game(mode: Any, slot: int) -> bool:
         return False
     g = game()
     load_level(mode, state["map"], state["skill"])
+    # Powerups are kept as expiry times on the level clock, so the clock is restored before them.
+    mode.elapsed = state["elapsed"]
     apply_inventory(mode, state["inventory"])
     mode.keys = set(state["keys"])
     mode.key_kinds = state.get("key_kinds", {})
@@ -376,7 +378,7 @@ def load_game(mode: Any, slot: int) -> bool:
         ("berserk_flash", 0.0),
     ):
         setattr(mode, field, state.get(field, default))
-    for field in ("elapsed", "cooldown", "kills", "item_count", "won", "secret_exit", "dead"):
+    for field in ("cooldown", "kills", "item_count", "won", "secret_exit", "dead"):
         setattr(mode, field, state[field])
     mode.secrets, mode.triggered = set(state["secrets"]), set(state["triggered"])
     mode.switch_timers = {int(i): value for i, value in state.get("switch_timers", {}).items()}
