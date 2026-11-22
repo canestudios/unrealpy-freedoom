@@ -78,6 +78,7 @@ class DoomSprite(ue.Actor):
     (the exact reach check stays in tick); animated pickups and pickups on moving floors always tick.
     """
 
+    replicates = True
     pickup_zone = ue.component(ue.BoxComponent, box_extent=ue.Vector(36 * SCALE, 36 * SCALE, 60 * SCALE))
     billboard = ue.component(ue.MaterialBillboardComponent, parent="pickup_zone")
     TICKS = False
@@ -256,6 +257,7 @@ class DoomSprite(ue.Actor):
 class DoomBarrel(ue.Actor):
     """Explodes when shot: damages what is around it (128 - distance), including other barrels."""
 
+    replicates = True
     body = ue.component(ue.BoxComponent, box_extent=ue.Vector(10 * SCALE, 10 * SCALE, 21 * SCALE))
     billboard = ue.component(ue.MaterialBillboardComponent, parent="body")
     pose: str = ue.uproperty("", rep_notify="on_pose")
@@ -337,11 +339,13 @@ class DoomBarrel(ue.Actor):
 class DoomEffect(DoomSprite):
     """A short-lived effect (puff, blood, teleport flash): each machine spawns its own, none replicates."""
 
+    replicates = False
     TICKS = True
 
     @override
     def post_init(self) -> None:
         super().post_init()
+        # Builds with older ScriptCore versions can still infer replication from DoomSprite.
         self.set_replicates(False)
         self.effect_name = "teleport"
         self.age = 0.0
