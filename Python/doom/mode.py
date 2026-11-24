@@ -649,11 +649,11 @@ class DoomHangarMode(LevelRuntime, ue.GameMode):
         else:
             self.sound("DSSWTCHN", at=player.get_actor_location())
 
-    def noise_graph(self) -> dict[int, list[tuple[int, int, bool]]]:
+    def noise_graph(self) -> defaultdict[int, list[tuple[int, int, bool]]]:
         """Sector -> (neighbour sector, line, blocks sound) for every two-sided line."""
         graph = self.sound_graph
         if graph is None:
-            graph: dict[int, list[tuple[int, int, bool]]] = defaultdict(list)
+            graph = defaultdict(list)
             sides = self.data["sides"]
             for index, line in enumerate(self.data["lines"]):
                 if line["left"] == 65535 or not line["flags"] & 4:
@@ -707,7 +707,7 @@ class DoomHangarMode(LevelRuntime, ue.GameMode):
         # A monster fits through a line only if it is wider than its diameter; portal = line midpoint.
         narrowest = 2 * min((info.radius for info in MONSTER_INFO.values() if info.radius), default=16)
         vertices, sides = self.data["vertices"], self.data["sides"]
-        portals: dict[int, list[tuple[int, float, float]]] = defaultdict(list)
+        portals: defaultdict[int, list[tuple[int, float, float]]] = defaultdict(list)
         for line in self.data["lines"]:
             if line["left"] == 65535 or line["right"] == 65535:
                 continue

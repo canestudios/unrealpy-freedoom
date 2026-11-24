@@ -124,7 +124,7 @@ class LevelRuntime:
         music: DoomMusic
         enemies: list[Any]
         sound_targets: dict[int, ue.Actor]
-        sound_graph: dict[int, list[tuple[int, int, bool]]] | None
+        sound_graph: defaultdict[int, list[tuple[int, int, bool]]] | None
         health: int
         armor: int
         armor_type: int
