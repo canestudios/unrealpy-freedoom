@@ -79,7 +79,6 @@ from doom.music import DoomMusic as DoomMusic
 from doom.player import DoomController as DoomController
 from doom.player import DoomInput as DoomInput
 from doom.player import DoomMarine as DoomMarine
-from doom.projectiles import DoomFireball as DoomFireball
 from doom.projectiles import DoomProjectile as DoomProjectile
 from doom.state import DoomGameState as DoomGameState
 from doom.state import DoomPlayerState as DoomPlayerState

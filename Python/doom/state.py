@@ -13,7 +13,7 @@ from typing import Any
 from typing_extensions import override
 
 import ue
-from doom import campaign, geometry, lighting, monsters, projectiles, world
+from doom import campaign, geometry, lighting, monsters, world
 from doom.common import SCALE, clear_cache, mode_now, player_now, weapon_time
 from doom.level import LevelRuntime
 from doom.music import DoomMusic
@@ -74,7 +74,7 @@ class DoomPlayerState(ue.PlayerState):
     kills: int = ue.uproperty(0, replicated=True)  # this level's score, credited to the marine that earned it
     items: int = ue.uproperty(0, replicated=True)
     secret_found: int = ue.uproperty(0, replicated=True)
-    frags: int = ue.uproperty(0, replicated=True)  # 0 in co-op; deathmatch: kills of others minus suicides
+    frags: int = ue.uproperty(0, replicated=True)  # kills of other marines minus suicides, co-op included
     # Deathmatch: how often this marine killed each marine (by start index); its own entry is suicides.
     frag_table: list[int] = ue.uproperty(default_factory=lambda: [0, 0, 0, 0], replicated=True)
     noclip: bool = ue.uproperty(False, rep_notify="on_noclip")
@@ -425,12 +425,7 @@ class DoomGameState(LevelRuntime, ue.GameState):
             self.things_scan = self.elapsed
             self.thing_actors = [
                 actor
-                for cls in (
-                    world.DoomSprite,
-                    world.DoomBarrel,
-                    monsters.DoomDemon,
-                    projectiles.DoomProjectile,
-                )
+                for cls in (world.DoomSprite, world.DoomBarrel, monsters.DoomDemon)  # projectiles are sprites
                 for actor in ue.GameplayStatics.get_all_actors_of_class(cls)
                 if actor is not None and actor.is_valid()
             ]

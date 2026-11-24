@@ -129,19 +129,22 @@ def apply_inventory(mode: Any, state: dict[str, Any]) -> None:
     mode.weapons = set(state["weapons"])
 
 
-def carry_over(ps: Any) -> dict[str, Any] | None:
-    """What a marine takes to the next map.
-
-    Health, armor, weapons and ammo stay; keys and powerups go, and so does the automap power. A marine
-    that is dead when the exit is used starts the next map like a new one (pistol, 100 health).
-    """
-    if ps.dead:
-        return None
-    kept = inventory(ps)
+def next_map_inventory(owner: Any) -> dict[str, Any]:
+    """What a marine takes to the next map: health, armor, weapons and ammo stay; keys and powerups go, and
+    so does the automap power."""
+    kept = inventory(owner)
     kept.update(
         invulnerability=0.0, invisibility=0.0, suit=0.0, light_visor=0.0, berserk=False, all_map=False
     )
     return kept
+
+
+def carry_over(ps: Any) -> dict[str, Any] | None:
+    """What a network marine takes to the next map. A marine that is dead when the exit is used starts the
+    next map like a new one (pistol, 100 health)."""
+    if ps.dead:
+        return None
+    return next_map_inventory(ps)
 
 
 def ending_music(marker: str) -> str:
@@ -178,7 +181,7 @@ def advance(mode: Any) -> None:
         )
         load_level(mode, marker, mode.skill, players=carried)
         return
-    load_level(mode, marker, mode.skill, inventory(mode))
+    load_level(mode, marker, mode.skill, next_map_inventory(mode))
     save_game(mode, 0)
 
 
@@ -247,8 +250,8 @@ def snapshot(mode: Any) -> dict[str, Any]:
         role = (
             "enemy" if isinstance(obj, g.DoomDemon) else "barrel" if isinstance(obj, g.DoomBarrel) else "item"
         )
-        if isinstance(obj, (g.DoomFireball, g.DoomProjectile)):
-            role = "projectile" if isinstance(obj, g.DoomProjectile) else "fireball"
+        if isinstance(obj, g.DoomProjectile):
+            role = "projectile"
         fields = (
             "kind",
             "prefix",
@@ -402,7 +405,6 @@ def load_game(mode: Any, slot: int) -> bool:
                 "barrel": g.DoomBarrel,
                 "item": g.DoomSprite,
                 "projectile": g.DoomProjectile,
-                "fireball": g.DoomFireball,
             }[saved["role"]]
             obj = ue.spawn_actor(cls, location=ue.Vector(*saved["position"]))
         obj.thing_id = saved["id"]

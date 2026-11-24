@@ -809,7 +809,7 @@ def tick(mode: Any, dt: float) -> None:
         if ident in rig.lights:
             continue
         name = type(obj).__name__
-        if name in ("DoomProjectile", "DoomFireball"):
+        if name == "DoomProjectile":
             spec = PROJECTILE_LIGHTS.get(getattr(obj, "key", "")[:4])
             if spec is not None and obj.is_valid():
                 entry = make_light(obj.get_actor_location(), spec[0], spec[1], spec[2])

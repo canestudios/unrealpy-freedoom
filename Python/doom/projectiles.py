@@ -19,40 +19,6 @@ if TYPE_CHECKING:
 
 
 @ue.uclass
-class DoomFireball(DoomSprite):
-    TICKS = True
-
-    def configure(self, tx: float, ty: float) -> None:
-        x, y = xy(self)
-        length = max(1, math.hypot(tx - x, ty - y))
-        self.dx, self.dy = (tx - x) / length, (ty - y) / length
-        self.age = 0.0
-        self.image("BAL1A0")
-
-    @override
-    def tick(self, delta_seconds: float) -> None:
-        mode = mode_now()
-        if not hasattr(self, "age") or mode is None or mode.menu:
-            return
-        self.age += delta_seconds
-        start = self.get_actor_location().copy()
-        end = start.copy()
-        end[0] += self.dx * 350 * delta_seconds * SCALE
-        end[1] -= self.dy * 350 * delta_seconds * SCALE
-        hit, _ = ray(start, end, [self])
-        if hit is not None or self.age > 4:
-            if isinstance(hit, player_mod.DoomMarine):
-                mode = mode_now()
-                if mode:
-                    mode.hurt(random.choice((3, 6, 9, 12, 15, 18, 21, 24)), who=hit)
-            elif isinstance(hit, world.DoomBarrel):
-                hit.hurt(random.choice((3, 6, 9, 12, 15, 18, 21, 24)))
-            self.destroy_actor()
-        else:
-            self.set_actor_location(end, False, True)
-
-
-@ue.uclass
 class DoomProjectile(DoomSprite):
     TICKS = True
 
