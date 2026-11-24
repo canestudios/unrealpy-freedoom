@@ -100,7 +100,7 @@ Set `DOOM_IWAD` as for the import when you play the Freedoom data set.
 
 Controls: WASD move, mouse look, left click fire, E use, Shift run, 1-8 weapons (1 toggles fist and
 chainsaw) or mouse wheel, Tab automap, R restart level, Enter next level after the exit, Escape menu
-(new game, load, save, resume, lighting, quit), F5 quick save, F9 quick load.
+(new game, load, save, multiplayer, resume, lighting, quit), F5 quick save, F9 quick load.
 
 Cheat console (F1 or Escape to close; Up/Down recall history), the Doom cheat codes:
 
@@ -136,7 +136,14 @@ Up to four marines play Doom's cooperative game on one map, through the whole ca
 exits, the boss levels and the end of each episode. Single-player is unchanged: it is the same code with one
 local player (a listen server or the standalone game).
 
-Host (a listen server: starts E1M1 and waits) and join (one client per machine, up to three besides the host):
+Host and join from the main menu's **MULTIPLAYER** screen. The host picks the game (co-op, deathmatch, altdeath),
+the episode and map, monsters and the frag and time limits, then **HOST GAME**: a listen server that starts the map
+and waits. Every other player (one client per machine, up to three besides the host) types the host's address on
+the **JOIN** row and presses Enter (the game uses UDP port 7777; `address:port` selects another one). This works in
+every build, a Shipping package included. In a network game, the menu's **LEAVE GAME** goes back to the
+single-player title (the host's ends the game for everybody).
+
+The same from the command line, in an editor build (a Shipping package has no `-UnrealPyRun`):
 
 ```powershell
 # the host
@@ -175,7 +182,7 @@ How it works:
 - **Rules.** Each player starts at its Doom player start (things 1 to 4). A dead player comes back after three
   seconds at its start with the pistol and without keys. Weapons and keys stay on the floor (each marine takes
   one of each). An exit used by anyone ends the level for everyone. Nothing pauses: Escape opens a menu (resume,
-  lighting, quit) over the running game. Saving and loading are single-player only.
+  lighting, leave game, quit) over the running game. Saving and loading are single-player only.
   `rules.MatchRules` (`COOP`, `DEATHMATCH`, `ALTDEATH`) holds what differs between the network game modes (weapons
   stay, inventory carries over, frags count, random spawns, item respawn, cheats allowed); the game state
   replicates the active one by name and `mode.match` returns it.
@@ -208,7 +215,9 @@ Not yet: restarting the level from a client.
 
 ### Deathmatch
 
-The host picks the game with options, as environment variables or `key=value` arguments:
+The host picks the game on the multiplayer screen or, with `doom.game:host`, with options as environment variables
+or `key=value` arguments. Either way they travel in the map's URL (`?listen?match=deathmatch?fraglimit=10`), where the
+game mode reads them (`net.host_options`):
 
 | Option | Env | Values |
 | --- | --- | --- |
