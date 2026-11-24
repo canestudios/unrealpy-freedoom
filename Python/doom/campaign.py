@@ -8,6 +8,7 @@ from typing import Any
 
 import ue
 from doom import lighting, net
+from doom.common import MODE
 from doom.dataset import save_root
 from doom.rules import (
     AMMO_MAX,
@@ -60,6 +61,95 @@ def leave_menu(mode: Any) -> None:
                 else ue.EMovementMode.MOVE_Walking
             )
             enemy.character_movement.set_movement_mode(movement)
+
+
+# -- the multiplayer screen: host a network game or join one -------------------------------------------------
+
+MATCHES = ("coop", "deathmatch", "altdeath")
+MATCH_NAMES = {"coop": "CO-OP", "deathmatch": "DEATHMATCH", "altdeath": "ALTDEATH"}
+FRAG_LIMITS = (0, 5, 10, 20, 50)
+TIME_LIMITS = (0, 5, 10, 15, 20, 30)  # minutes
+HOST_ROW, JOIN_ROW = 6, 7  # the screen's rows above them change the host's options
+ADDRESS_KEYS = {
+    str(i): ue.Key(key_name=name)
+    for i, name in enumerate(("Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"))
+}
+ADDRESS_KEYS.update({letter: ue.Key(key_name=letter.upper()) for letter in "abcdefghijklmnopqrstuvwxyz"})
+ADDRESS_KEYS.update({".": ue.Key(key_name="Period"), "-": ue.Key(key_name="Hyphen")})
+BACKSPACE = ue.Key(key_name="BackSpace")
+
+
+def cycle(values: tuple[Any, ...], value: Any, delta: int) -> Any:
+    """The value `delta` steps after `value` in `values`, round the end."""
+    return values[(values.index(value) + delta) % len(values)]
+
+
+def host_choice(mode: Any) -> net.HostOptions:
+    """The network game the multiplayer screen describes."""
+    return net.HostOptions(
+        match=mode.host_match,
+        fraglimit=mode.host_fraglimit,
+        timelimit=float(mode.host_timelimit),
+        monsters=mode.host_monsters,
+        map=f"E{mode.selected_episode}M{mode.selected_map}",
+    )
+
+
+def change_host(mode: Any, row: int, delta: int) -> None:
+    """Left or right on one of the multiplayer screen's option rows."""
+    if row == 0:
+        mode.host_match = cycle(MATCHES, mode.host_match, delta)
+        mode.host_monsters = mode.host_match == "coop"  # how people play each mode, as the options' default
+    elif row == 1:
+        mode.selected_episode = (mode.selected_episode - 1 + delta) % 4 + 1
+    elif row == 2:
+        mode.selected_map = (mode.selected_map - 1 + delta) % 9 + 1
+    elif row == 3:
+        mode.host_monsters = not mode.host_monsters
+    elif row == 4:
+        mode.host_fraglimit = cycle(FRAG_LIMITS, mode.host_fraglimit, delta)
+    else:
+        mode.host_timelimit = cycle(TIME_LIMITS, mode.host_timelimit, delta)
+
+
+def start_server(options: net.HostOptions) -> None:
+    """Become a listen server for `options`: the game travels to its first map with them in the URL."""
+    url_options = f"game={MODE}?" + net.travel_options(options)
+    ue.GameplayStatics.open_level(
+        "/Engine/Maps/Entry", True, url_options, world_context_object=ue.get_world()
+    )
+
+
+def connect(address: str) -> None:
+    """Join the listen server at `address`, a host name or an IP (UDP port 7777 unless `address:port`)."""
+    ue.GameplayStatics.open_level(address, True, "", world_context_object=ue.get_world())
+
+
+def leave_game() -> None:
+    """Leave a network game (a host ends it): back to the single-player title screen."""
+    ue.GameplayStatics.open_level(
+        "/Engine/Maps/Entry", True, f"game={MODE}", world_context_object=ue.get_world()
+    )
+
+
+def address_input(mode: Any, controller: Any) -> None:
+    """Typing the host's address on the multiplayer screen: Enter joins, Escape stops typing."""
+    pressed = controller.was_input_key_just_pressed
+    keys = game().KEYS
+    if pressed(keys["Escape"]):
+        mode.typing_address = False
+        return
+    if pressed(keys["Enter"]):
+        mode.typing_address = False
+        if mode.join_address:
+            mode.notice, mode.notice_timer = f"JOINING {mode.join_address.upper()}", 10.0
+            connect(mode.join_address)
+        return
+    if pressed(BACKSPACE):
+        mode.join_address = mode.join_address[:-1]
+    for character, key in ADDRESS_KEYS.items():
+        if pressed(key):
+            mode.join_address = (mode.join_address + character)[:64]
 
 
 ENDING_DELAY = 12.0  # seconds a co-op game shows the end of an episode before the next one starts
@@ -482,11 +572,27 @@ def menu_rows(mode: Any) -> list[str]:
         ]
     if mode.menu in ("save", "load"):
         return [slot_label(i) for i in range(6)]
-    rows = ["RESUME"] if mode.networked else ["NEW GAME / SELECT MAP", "LOAD GAME", "SAVE GAME", "RESUME"]
+    if mode.menu == "multiplayer":
+        e, m = mode.selected_episode, mode.selected_map
+        return [
+            f"GAME: {MATCH_NAMES[mode.host_match]}",
+            f"EPISODE: {e}",
+            f"MAP: {map_heading(f'E{e}M{m}')}",
+            "MONSTERS: " + ("ON" if mode.host_monsters else "OFF"),
+            f"FRAG LIMIT: {mode.host_fraglimit or 'NONE'}",
+            "TIME LIMIT: " + (f"{mode.host_timelimit} MIN" if mode.host_timelimit else "NONE"),
+            "HOST GAME",
+            "JOIN: " + mode.join_address.upper() + ("_" if mode.typing_address else ""),
+        ]
+    rows = (
+        ["RESUME"]
+        if mode.networked
+        else ["NEW GAME / SELECT MAP", "LOAD GAME", "SAVE GAME", "MULTIPLAYER", "RESUME"]
+    )
     if lighting.supported():
         rows.append("LIGHTING: " + ("LIT" if lighting.active() else "CLASSIC"))
         rows.extend(lighting.slider_rows())
-    return [*rows, "QUIT"]
+    return [*rows, "LEAVE GAME", "QUIT"] if mode.networked else [*rows, "QUIT"]
 
 
 def menu_input(mode: Any, controller: Any) -> None:
@@ -499,6 +605,9 @@ def menu_input(mode: Any, controller: Any) -> None:
         if pressed("Enter") or pressed("Escape"):
             enter_menu(mode)
         return
+    if mode.menu == "multiplayer" and mode.typing_address:
+        address_input(mode, controller)
+        return
     rows = menu_rows(mode)
     if pressed("Up") or pressed("W"):
         mode.menu_row = (mode.menu_row - 1) % len(rows)
@@ -508,6 +617,8 @@ def menu_input(mode: Any, controller: Any) -> None:
     if mode.menu == "setup" and delta and mode.menu_row < 3:
         field, limit = (("selected_episode", 4), ("selected_map", 9), ("selected_skill", 5))[mode.menu_row]
         setattr(mode, field, (getattr(mode, field) - 1 + delta) % limit + 1)
+    if mode.menu == "multiplayer" and delta and mode.menu_row < HOST_ROW:
+        change_host(mode, mode.menu_row, delta)
     row = rows[mode.menu_row]
     if mode.menu == "main" and delta and row.startswith("LIGHTING"):
         lighting.toggle(mode)
@@ -531,6 +642,8 @@ def menu_input(mode: Any, controller: Any) -> None:
             lighting.toggle(mode)
         elif bool(slider) or row == lighting.RESET_ROW:
             lighting.reset(mode, slider)
+        elif row == "LEAVE GAME":
+            leave_game()
         else:
             ue.KismetSystemLibrary.execute_console_command("quit")
         return
@@ -543,13 +656,22 @@ def menu_input(mode: Any, controller: Any) -> None:
             leave_menu(mode)
     elif mode.menu == "load":
         load_game(mode, mode.menu_row)
-    elif mode.menu_row == 0:
+    elif mode.menu == "multiplayer":
+        if mode.menu_row == HOST_ROW:
+            start_server(host_choice(mode))
+        elif mode.menu_row == JOIN_ROW:
+            mode.typing_address = True
+            mode.notice, mode.notice_timer = "TYPE THE HOST'S ADDRESS, ENTER TO JOIN", 10.0
+    elif row == "NEW GAME / SELECT MAP":
         enter_menu(mode, "setup")
-    elif mode.menu_row == 1:
+    elif row == "LOAD GAME":
         enter_menu(mode, "load")
-    elif mode.menu_row == 2:
+    elif row == "SAVE GAME":
         enter_menu(mode, "save")
-    elif mode.menu_row == 3:
+    elif row == "MULTIPLAYER":
+        mode.typing_address = False
+        enter_menu(mode, "multiplayer")
+    elif row == "RESUME":
         if mode.started:
             leave_menu(mode)
     elif row.startswith("LIGHTING"):

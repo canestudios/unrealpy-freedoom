@@ -95,6 +95,9 @@ def players() -> list[state.DoomPlayerState]:
 
 
 # -- the host's options -----------------------------------------------------------------------------------
+# The host travels to the map with its options in the URL (`?listen?match=deathmatch?fraglimit=10`), from the
+# multiplayer menu or `doom.game:host`; the game mode reads them back from there. A URL works in every build:
+# a Shipping game ignores a map URL on its command line, but not one it travels to.
 
 OPTION_ENV = {
     "match": "DOOM_MATCH",
@@ -116,36 +119,59 @@ class HostOptions:
     map: str = "E1M1"
 
 
-def apply_args(args: list[str]) -> None:
-    """Take `key=value` (or `--key=value`) host arguments into the environment the options are read from."""
-    for arg in args:
-        key, _, value = arg.lstrip("-").partition("=")
-        if key.lower() in OPTION_ENV and value:
-            os.environ[OPTION_ENV[key.lower()]] = value
+def game_options() -> str:
+    """The options of the URL the game travelled to (the game mode's), e.g. `?listen?match=altdeath`."""
+    game_mode = ue.GameplayStatics.get_game_mode(world_context_object=ue.get_world())
+    return str(game_mode.options_string) if game_mode is not None else ""
 
 
-def _number(name: str, kind: type, default: Any) -> Any:
+def option(options: str, key: str) -> str:
+    """One option of a URL's options, "" when it is not there."""
+    return str(ue.GameplayStatics.parse_option(options, key))
+
+
+def _number(text: str, kind: type, default: Any, key: str) -> Any:
     try:
-        return max(kind(0), kind(os.environ.get(name, "") or default))
+        return max(kind(0), kind(text or default))
     except ValueError:
-        ue.log(f"Doom: {name} is not a number: ignored", "warning")
+        ue.log(f"Doom: the {key} option is not a number: ignored", "warning")
         return default
 
 
-def host_options() -> HostOptions:
-    """The host's options from env DOOM_MATCH, DOOM_FRAGLIMIT, DOOM_TIMELIMIT, DOOM_MONSTERS and DOOM_MAP.
+def host_options(options: str) -> HostOptions:
+    """The host's options from a URL's options: match, fraglimit, timelimit (minutes), monsters and map.
 
     Monsters default to off in deathmatch and altdeath (how people play) and to on in co-op.
     """
-    match = os.environ.get("DOOM_MATCH", "").strip().lower() or "coop"
+    match = option(options, "match").strip().lower() or "coop"
     if match not in MATCH_RULES:
-        ue.log(f"Doom: unknown DOOM_MATCH {match!r} (coop, deathmatch, altdeath): co-op", "warning")
+        ue.log(f"Doom: unknown match {match!r} (coop, deathmatch, altdeath): co-op", "warning")
         match = "coop"
-    monsters = os.environ.get("DOOM_MONSTERS", "").strip().lower()
+    monsters = option(options, "monsters").strip().lower()
     return HostOptions(
         match=match,
-        fraglimit=_number("DOOM_FRAGLIMIT", int, 0),
-        timelimit=_number("DOOM_TIMELIMIT", float, 0.0),
+        fraglimit=_number(option(options, "fraglimit"), int, 0, "fraglimit"),
+        timelimit=_number(option(options, "timelimit"), float, 0.0, "timelimit"),
         monsters=(monsters not in ("0", "false", "no", "off")) if monsters else match == "coop",
-        map=os.environ.get("DOOM_MAP", "").strip().upper() or "E1M1",
+        map=option(options, "map").strip().upper() or "E1M1",
     )
+
+
+def travel_options(options: HostOptions) -> str:
+    """The URL options a listen server travels with, which `host_options` reads back."""
+    return (
+        f"listen?match={options.match}?fraglimit={options.fraglimit}?timelimit={options.timelimit:g}"
+        f"?monsters={int(options.monsters)}?map={options.map}"
+    )
+
+
+def args_options(args: list[str]) -> HostOptions:
+    """The host's options from `key=value` (or `--key=value`) arguments, else from the environment variables
+    of OPTION_ENV: what `doom.game:host` travels with."""
+    given = {}
+    for arg in args:
+        key, _, value = arg.lstrip("-").partition("=")
+        if key.lower() in OPTION_ENV and value:
+            given[key.lower()] = value
+    pairs = (f"{key}={given.get(key) or os.environ.get(name, '')}" for key, name in OPTION_ENV.items())
+    return host_options("?" + "?".join(pair for pair in pairs if not pair.endswith("=")))

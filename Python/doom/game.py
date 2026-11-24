@@ -29,22 +29,19 @@ def play(_args: list[str]) -> None:
 
 
 def host(args: list[str]) -> None:
-    """Listen server for this player and for the clients that run `join`.
+    """Listen server for this player and for the clients that run `join`, as the multiplayer menu's HOST GAME.
 
     Options, as `key=value` arguments or env: match (`DOOM_MATCH`: coop, deathmatch, altdeath), fraglimit
     (`DOOM_FRAGLIMIT`), timelimit in minutes (`DOOM_TIMELIMIT`), monsters (`DOOM_MONSTERS`: 0 or 1, default
     1 in co-op and 0 otherwise) and map (`DOOM_MAP`, default E1M1).
     """
-    net.apply_args(args)
-    ue.GameplayStatics.open_level(
-        "/Engine/Maps/Entry", True, f"game={MODE}?listen", world_context_object=ue.get_world()
-    )
+    campaign.start_server(net.args_options(args))
 
 
 def join(args: list[str]) -> None:
-    """Join a co-op game: the address is the first argument, else env DOOM_SERVER, else 127.0.0.1."""
-    address = (args[0] if args else os.environ.get("DOOM_SERVER", "")) or "127.0.0.1"
-    ue.KismetSystemLibrary.execute_console_command(f"open {address}")
+    """Join a network game, as the multiplayer menu's JOIN: the address is the first argument, else env
+    DOOM_SERVER, else 127.0.0.1."""
+    campaign.connect((args[0] if args else os.environ.get("DOOM_SERVER", "")) or "127.0.0.1")
 
 
 def sector_spots(mode: Any, sector: int, count: int) -> list[tuple[float, float]]:

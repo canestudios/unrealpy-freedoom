@@ -115,10 +115,10 @@ class DoomHangarMode(LevelRuntime, ue.GameMode):
         self.init_counters()
         console.initialize(self)
         self.maps = manifest["maps"]
-        options = net.host_options() if self.networked else net.HostOptions()
+        options = net.host_options(net.game_options()) if self.networked else net.HostOptions()
         start = options.map
         if start not in self.maps:
-            ue.log(f"Doom: unknown DOOM_MAP {start!r}: E1M1", "warning")
+            ue.log(f"Doom: unknown map {start!r}: E1M1", "warning")
             start = "E1M1"
         self.match_name, self.fraglimit, self.timelimit = options.match, options.fraglimit, options.timelimit
         self.with_monsters = options.monsters
@@ -126,6 +126,9 @@ class DoomHangarMode(LevelRuntime, ue.GameMode):
         self.respawn_queue: list[tuple[float, Any]] = []
         self.marker, self.skill = start, 3
         self.selected_episode, self.selected_map, self.selected_skill = 1, 1, 3
+        # The multiplayer screen's choices (episode and map are the setup screen's).
+        self.host_match, self.host_monsters, self.host_fraglimit, self.host_timelimit = "coop", True, 0, 0
+        self.join_address, self.typing_address = "127.0.0.1", False
         self.menu, self.menu_row = ("" if self.networked else "main"), 0
         self.started, self.finished_episode, self.secret_exit = self.networked, False, False
         self.load_data(start)
