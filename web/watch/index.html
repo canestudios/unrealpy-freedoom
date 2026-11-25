@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Watch Freedoom Phase 1 running as Python gameplay in Unreal Engine 5.9 Preview on desktop WebGPU. Read the source or play the browser demo.">
+  <title>Freedoom gameplay · UnrealPy</title>
+  <style>
+    :root { color-scheme: dark; background: #101319; color: #f4f5f7; font: 17px/1.5 Inter, system-ui, sans-serif; }
+    body { margin: 0; }
+    main { max-width: 56rem; margin: auto; padding: clamp(1rem, 4vw, 3rem); }
+    h1 { font-size: clamp(2rem, 5vw, 3.25rem); line-height: 1.08; margin: 0 0 .5rem; }
+    p { max-width: 64ch; margin: .5rem 0 1rem; }
+    video { display: block; width: 100%; height: auto; aspect-ratio: 16/9; margin: 1.5rem 0; }
+    a { color: #ffe49d; text-underline-offset: .2em; }
+    a:focus-visible { outline: 3px solid #ffe49d; outline-offset: 4px; }
+    nav { display: flex; flex-wrap: wrap; gap: .75rem 1.3rem; align-items: center; }
+    .play { background: #f4c35a; color: #181a1e; border-radius: .35rem; padding: .5rem 1rem; font-weight: 700; text-decoration: none; }
+    footer { border-top: 1px solid #383c45; margin-top: 2rem; padding-top: 1rem; font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Freedoom gameplay</h1>
+    <p>The first room of Freedoom Phase 1 runs in a desktop browser. Unreal renders the level while Python drives the player, enemies and HUD. This capture uses Unreal Engine 5.9 Preview and WebGPU.</p>
+    <video controls playsinline preload="none" poster="gameplay.jpg" width="1280" height="720" aria-label="Silent gameplay capture of the player entering the first room of Freedoom Phase 1">
+      <source src="gameplay.mp4" type="video/mp4">
+      <a href="gameplay.mp4">Download the gameplay clip</a>
+    </video>
+    <nav aria-label="Try the demo and explore its code">
+      <a class="play" href="../">Play the browser demo</a>
+      <a href="https://github.com/canestudios/unrealpy-freedoom/tree/main/Python/doom">Read the Python gameplay</a>
+      <a href="https://unrealpy.canestudios.xyz/docs/examples/freedoom/">UnrealPy demo guide</a>
+    </nav>
+    <p>To play, use a WebGPU-capable desktop browser, a keyboard and a mouse. Click the ready screen, use the arrow keys and Enter to start a new game, then move with WASD. Use the mouse to look, left-click to fire, E to interact and Tab for the map. The web build is single-player.</p>
+    <footer id="credits">
+      <p>Levels, art and sound by contributors to the <a href="https://freedoom.github.io/">Freedoom</a> project. <a href="../FREEDOOM-COPYING.txt">Freedoom copyright and BSD terms</a>.</p>
+      <p>Gameplay code by Cane Studios, available under the <a href="../LICENSE.txt">MIT License</a>. <a href="mailto:contact@canestudios.xyz">contact@canestudios.xyz</a></p>
+    </footer>
+  </main>
+</body>
+</html>

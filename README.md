@@ -1,12 +1,14 @@
-# Doom on UnrealPy
+# Freedoom on UnrealPy
 
 Doom rebuilt as Python gameplay in Unreal Engine 5.9: the game mode, the marine, the monsters, projectiles, HUD
 and menus are `@ue.uclass` Python classes running on the [UnrealPy](#requirements) plugin, and the levels are
 rendered as native Unreal procedural meshes. It is not a Doom source port, and it has co-op and deathmatch over
 Unreal's own networking.
 
+[Play the single-player browser demo](https://canestudios.github.io/unrealpy-freedoom/) on a desktop with WebGPU, keyboard and mouse, or [watch the gameplay clip](https://canestudios.github.io/unrealpy-freedoom/watch/) on any device. The web demo uses UE 5.9 Preview. [UnrealPy documentation and supported release](https://unrealpy.canestudios.xyz/docs/getting-started/compatibility/).
+
 This is UnrealPy's demo project, released alongside the plugin. The whole game is the `doom` package in
-[`Python/doom`](Python/doom), about 10,000 lines of Python; there is no C++ module and no Blueprint.
+[`Python/doom`](Python/doom), about 10,000 lines of Python. A small C++ build module supplies the Unreal project target.
 
 It is an independent reimplementation, written from how the game plays rather than from id Software's source
 release, and contains none of that code. Animation timings and the monsters' decision-making are this project's
@@ -423,6 +425,14 @@ To publish on this repository's GitHub Pages (Settings > Pages > Source: GitHub 
 The build cannot be made on GitHub's runners (it needs the engine and the plugin), so the workflow
 (`.github/workflows/pages.yml`) publishes the uploaded zip as a Pages artifact. Publishing that way runs no Jekyll,
 which would drop the files whose names start with `_` (`__init__.py`...), and has no 100 MB per-file limit.
+
+Changes to the watch page, credits and Pages preparation script deploy with the existing web build. The workflow adds the on-demand gameplay clip and public source links to the game's loading, unsupported-browser and exit screens.
+
+## Licences and contact
+
+Cane Studios licenses its original gameplay code and accompanying documentation under the [MIT License](LICENSE). The separately distributed UnrealPy plugin and Unreal Engine retain their own terms. The browser build uses data by the [Freedoom contributors](https://freedoom.github.io/) under the [Freedoom BSD licence](FREEDOOM-COPYING.txt). Python, NumPy and other third-party dependencies retain their upstream licences and notices.
+
+For questions about this project, contact [contact@canestudios.xyz](mailto:contact@canestudios.xyz).
 
 ## Trademarks
 

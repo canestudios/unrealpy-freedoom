@@ -1,10 +1,18 @@
 # Publishes the web build on GitHub Pages. The build needs Unreal Engine and the UnrealPy plugin, so it is made
 # locally (tools/package-web.ps1) and uploaded as a release asset (tools/deploy-web.ps1), which this workflow
-# publishes as it is: deploying a Pages artifact runs no Jekyll (which would drop the `_` files Python needs) and
+# publishes with the project watch page: deploying a Pages artifact runs no Jekyll (which would drop the `_` files Python needs) and
 # has no per-file size limit of git.
 name: Pages
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/pages.yml
+      - tools/prepare-pages.py
+      - web/**
+      - LICENSE
+      - FREEDOOM-COPYING.txt
   workflow_dispatch:
     inputs:
       tag:
@@ -26,13 +34,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Download the web build
         env:
           GH_TOKEN: ${{ github.token }}
+          WEB_TAG: ${{ inputs.tag || 'web-build' }}
         run: |
-          gh release download "${{ inputs.tag }}" --repo "${{ github.repository }}" --pattern web.zip
+          gh release download "$WEB_TAG" --repo "${{ github.repository }}" --pattern web.zip
           mkdir site
           unzip -q web.zip -d site
+          python3 tools/prepare-pages.py site
           touch site/.nojekyll
           du -sh site
       - uses: actions/configure-pages@v5

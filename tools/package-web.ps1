@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Packages the web (Wasm) build of Doom on UnrealPy into <Output>\Wasm, ready to upload as a static site.
+Packages the web (Wasm) build of Freedoom on UnrealPy into <Output>\Wasm, ready to upload as a static site.
 
 .DESCRIPTION
 Needs Unreal Engine 5.9 with the Wasm platform, the Emscripten SDK the engine asks for (README.md, Web build),
