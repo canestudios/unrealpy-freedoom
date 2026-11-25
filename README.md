@@ -16,7 +16,7 @@ extracted from a WAD you own (or the free Freedoom) at import time into git-igno
 
 ## Requirements
 
-- Unreal Engine 5.9 (Windows; the commands below use the Epic Games launcher's install path as `<UE>`).
+- Unreal Engine 5.9 Preview (Windows; the commands below use the Epic Games launcher's install path as `<UE>`).
 - The **UnrealPy** plugin and its companion **ScriptCore**. They are distributed separately and are not part of this
   repository: copy them into `Plugins/` (`Plugins/UnrealPy`, `Plugins/ScriptCore`) or install them into the engine.
 - A WAD (below).
@@ -119,6 +119,9 @@ Cheat console (F1 or Escape to close; Up/Down recall history), the Doom cheat co
 The automap (Tab) shows walls and special lines; with the automap power (`IDBEHOLDA`) it also shows the steps and
 ledges, with `IDDT` every line and then the monsters and items.
 
+<details>
+<summary>Save format and crusher mechanics</summary>
+
 Saves are the engine's own save games: a `DoomSave` object (`savegame.py`) in slot `<data set>-slot-N`, which the
 engine keeps as `Saved/SaveGames/FreedoomLocal-slot-N.sav` (in a packaged game, under the user's local
 application data). Slot 0 is the autosave at level start, slot 5 the quick save; a save is bound to the SHA-256 of
@@ -130,6 +133,8 @@ a marine, a monster or a barrel deals 10 damage every fourth tic (in a deathmatc
 -1 frag), corpses in the way turn into gibs (`POL5`) and dropped items vanish. The ceiling slows to 1/8 speed while
 it squeezes something, except the fast crushers (6, 77), and goes on to the floor. A ceiling that does not crush
 (41, 43, 40) stops against what is in its way; a closing door reopens, except the plain `close` doors.
+
+</details>
 
 ## Co-op
 
