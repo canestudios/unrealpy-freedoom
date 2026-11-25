@@ -26,7 +26,7 @@ def prepare(site: Path) -> None:
             '</p></noscript><script src="wasm-strings.js">'
         ),
         '<span data-i18n>Turn your phone sideways to play</span>': (
-            '<span>Playing requires a desktop browser, keyboard and mouse.</span>' + NAV
+            '<span>Open the game on desktop, or watch it here.</span>' + NAV
         ),
     }
     for marker, replacement in additions.items():

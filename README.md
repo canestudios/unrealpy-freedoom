@@ -2,9 +2,9 @@
 
 Freedoom runs in Unreal Engine with its player, monsters, weapons and HUD written in [Python](Python/doom). Unreal renders the levels, and the desktop game supports co-op and deathmatch.
 
-[Play the single-player demo](https://canestudios.github.io/unrealpy-freedoom/) on a desktop browser with WebGPU, a keyboard and a mouse, or [watch the gameplay clip](https://canestudios.github.io/unrealpy-freedoom/watch/).
+[Play the single-player demo](https://canestudios.github.io/unrealpy-freedoom/) or [watch the gameplay clip](https://canestudios.github.io/unrealpy-freedoom/watch/).
 
-The demo uses UE 5.9 Preview and a matching UnrealPy build. A small C++ module supplies the Unreal project target. [Plugin compatibility](https://unrealpy.canestudios.xyz/docs/getting-started/compatibility/)
+The browser demo uses a private UE 5.9 Preview build of UnrealPy. Start with the [monster behavior](Python/doom/monsters.py) or the [game mode](Python/doom/mode.py) to explore the code. A small C++ module supplies the Unreal project target. [Plugin compatibility](https://unrealpy.canestudios.xyz/docs/getting-started/compatibility/)
 
 It is an independent reimplementation, written from how the game plays rather than from id Software's source
 release, and contains none of that code. Animation timings and the monsters' decision-making are this project's
