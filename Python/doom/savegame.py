@@ -23,9 +23,14 @@ def _rotator() -> ue.Rotator:
     return ue.Rotator(0.0, 0.0, 0.0)
 
 
+# The order of SavedInventory.powers.
+POWERS = ("invulnerability", "invisibility", "suit", "light_visor")
+
+
 @ue.ustruct
 class SavedInventory(ue.StructBase):
-    """What campaign.inventory returns: the INVENTORY fields and the weapons."""
+    """What campaign.inventory returns: the INVENTORY fields and the weapons, the powerups' expiry times in
+    `powers` (POWERS order)."""
 
     god_mode: bool = False
     health: int = 100
@@ -38,10 +43,7 @@ class SavedInventory(ue.StructBase):
     backpack: bool = False
     berserk: bool = False
     armor_type: int = 1
-    invulnerability: float = 0.0
-    suit: float = 0.0
-    invisibility: float = 0.0
-    light_visor: float = 0.0
+    powers: list[float] = ue.uproperty(default_factory=lambda: [0.0, 0.0, 0.0, 0.0])
     all_map: bool = False
     weapons: list[str] = ue.uproperty(default_factory=list)
 

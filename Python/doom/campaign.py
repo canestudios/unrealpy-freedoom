@@ -392,12 +392,15 @@ def thing_fields(thing: savegame.SavedThing) -> dict[str, Any]:
 
 
 def saved_inventory(state: dict[str, Any]) -> savegame.SavedInventory:
-    fields = {field: state[field] for field in INVENTORY}
-    return savegame.SavedInventory(**fields, weapons=list(state["weapons"]))
+    fields = {field: state[field] for field in INVENTORY if field not in savegame.POWERS}
+    powers = [float(state[power]) for power in savegame.POWERS]
+    return savegame.SavedInventory(**fields, powers=powers, weapons=list(state["weapons"]))
 
 
 def inventory_of(saved: savegame.SavedInventory) -> dict[str, Any]:
-    return {field: getattr(saved, field) for field in INVENTORY} | {"weapons": list(saved.weapons)}
+    found = {field: getattr(saved, field) for field in INVENTORY if field not in savegame.POWERS}
+    found |= dict(zip(savegame.POWERS, saved.powers, strict=True))
+    return found | {"weapons": list(saved.weapons)}
 
 
 def snapshot(mode: Any) -> savegame.DoomSave:
