@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-import math
 import random
 from typing import Any
 
 import ue
-from doom import lighting, net
+from doom import lighting, net, savegame
 from doom.common import MODE
-from doom.dataset import save_root
 from doom.rules import (
     AMMO_MAX,
     ANIMATIONS,
@@ -19,9 +17,6 @@ from doom.rules import (
     map_heading,
     next_map,
     par_time,
-    read_save,
-    save_path,
-    write_save,
 )
 
 
@@ -316,22 +311,101 @@ def intermission_stats(mode: Any) -> dict[str, Any]:
     }
 
 
-def finite(value: Any) -> Any:
-    if isinstance(value, float) and not math.isfinite(value):
-        return None
-    if isinstance(value, dict):
-        return {key: finite(v) for key, v in value.items() if key != "actor"}
-    if isinstance(value, (tuple, list, set)):
-        return [finite(v) for v in value]
-    return value
+# What a save keeps of each object, the ones it has (SavedThing's members). `anim` and `charge_direction`
+# change shape on the way (saved_thing, thing_fields).
+OBJECT_FIELDS = (
+    "kind",
+    "prefix",
+    "health",
+    "dead",
+    "awake",
+    "clock",
+    "frame",
+    "key",
+    "taken",
+    "dropped",
+    "exploded",
+    "anim",
+    "anim_time",
+    "fired",
+    "action_event",
+    "facing",
+    "charge_time",
+    "charge_direction",
+    "age",
+    "dx",
+    "dy",
+    "dz",
+    "speed",
+    "damage",
+    "radius",
+    "weapon",
+    "friendly",
+    "stage",
+    "family",
+    "sprayed",
+    "spawn_x",
+    "spawn_y",
+    "spawn_z",
+    "spawn_health",
+    "type_id",
+)
+DOOR_FIELDS = ("height", "target", "opened", "timer", "closed", "speed", "reopen", "stays")
+MOVER_FIELDS = ("kind", "speed", "target", "offset", "goal", "wait", "active", "high")
+CEILING_FIELDS = ("offset", "goal", "speed", "active", "low", "high", "cycle", "crush", "slows", "base_speed")
 
 
-def snapshot(mode: Any) -> dict[str, Any]:
+def saved_thing(obj: Any, role: str) -> savegame.SavedThing:
+    thing = savegame.SavedThing(
+        role=role,
+        id=int(getattr(obj, "thing_id", -1)),
+        position=obj.get_actor_location(),
+        hidden=bool(obj.hidden),
+        owner_id=int(getattr(getattr(obj, "owner", None), "thing_id", -1)),
+    )
+    kept = []
+    for field in OBJECT_FIELDS:
+        value = getattr(obj, field, None)
+        if value is None:
+            continue
+        if field == "anim":
+            value = [savegame.ActionFrame(letter=a, tics=b, strikes=c) for a, b, c in value]
+        elif field == "charge_direction":
+            value = [float(v) for v in value]
+        setattr(thing, field, value)
+        kept.append(field)
+    thing.fields = kept
+    return thing
+
+
+def thing_fields(thing: savegame.SavedThing) -> dict[str, Any]:
+    """The fields a SavedThing restores, as the object holds them."""
+    found = {}
+    for field in thing.fields:
+        value = getattr(thing, field)
+        if field == "anim":
+            value = [(frame.letter, frame.tics, frame.strikes) for frame in value]
+        elif field == "charge_direction":
+            value = [float(v) for v in value]
+        found[field] = value
+    return found
+
+
+def saved_inventory(state: dict[str, Any]) -> savegame.SavedInventory:
+    fields = {field: state[field] for field in INVENTORY}
+    return savegame.SavedInventory(**fields, weapons=list(state["weapons"]))
+
+
+def inventory_of(saved: savegame.SavedInventory) -> dict[str, Any]:
+    return {field: getattr(saved, field) for field in INVENTORY} | {"weapons": list(saved.weapons)}
+
+
+def snapshot(mode: Any) -> savegame.DoomSave:
     player: Any = ue.GameplayStatics.get_player_pawn(0)
     controller: Any = ue.GameplayStatics.get_player_controller(0)
     assert player and controller
-    objects = []
     g = game()
+    objects = []
     for obj in mode.objects:
         if not obj.is_valid():
             continue
@@ -342,88 +416,46 @@ def snapshot(mode: Any) -> dict[str, Any]:
         )
         if isinstance(obj, g.DoomProjectile):
             role = "projectile"
-        fields = (
-            "kind",
-            "prefix",
-            "health",
-            "dead",
-            "awake",
-            "attack",
-            "clock",
-            "frame",
-            "key",
-            "taken",
-            "dropped",
-            "exploded",
-            "anim",
-            "anim_time",
-            "fired",
-            "action_event",
-            "facing",
-            "charge_time",
-            "charge_direction",
-            "age",
-            "dx",
-            "dy",
-            "dz",
-            "speed",
-            "damage",
-            "radius",
-            "weapon",
-            "friendly",
-            "stage",
-            "family",
-            "sprayed",
-            "spawn_x",
-            "spawn_y",
-            "spawn_z",
-            "spawn_health",
-            "type_id",
-        )
-        objects.append(
-            dict(
-                role=role,
-                id=getattr(obj, "thing_id", -1),
-                position=[float(v) for v in obj.get_actor_location()],
-                hidden=bool(obj.hidden),
-                owner_id=getattr(getattr(obj, "owner", None), "thing_id", -1),
-                fields={field: finite(getattr(obj, field)) for field in fields if hasattr(obj, field)},
-            )
-        )
-    return finite(
-        dict(
-            source_sha256=mode.data["source_sha256"],
-            map=mode.marker,
-            skill=mode.skill,
-            inventory=inventory(mode),
-            keys=sorted(mode.keys),
-            key_kinds=mode.key_kinds,
-            player=[float(v) for v in player.get_actor_location()],
-            rotation=[float(v) for v in controller.get_control_rotation()],
-            elapsed=mode.elapsed,
-            cooldown=mode.cooldown,
-            weapon_action=mode.weapon_action,
-            weapon_clock=mode.weapon_clock,
-            weapon_event=mode.weapon_event,
-            flash_variant=mode.flash_variant,
-            pickup_flash=mode.pickup_flash,
-            berserk_flash=mode.berserk_flash,
-            kills=mode.kills,
-            item_count=mode.item_count,
-            secrets=sorted(mode.secrets),
-            triggered=sorted(mode.triggered),
-            switches=sorted(mode.switches),
-            switch_timers=mode.switch_timers,
-            won=mode.won,
-            secret_exit=mode.secret_exit,
-            dead=mode.dead,
-            doors=mode.doors,
-            movers=mode.movers,
-            ceilings=mode.ceilings,
-            objects=objects,
-            random_state=random.getstate(),
-        )
-    )
+        objects.append(saved_thing(obj, role))
+    state = savegame.new_save()
+    state.source_sha256 = mode.data["source_sha256"]
+    state.map = mode.marker
+    state.skill = int(mode.skill)
+    state.inventory = saved_inventory(inventory(mode))
+    state.keys = sorted(mode.keys)
+    state.key_kinds = [savegame.KeyKind(colour=c, kind=k) for c, k in mode.key_kinds.items()]
+    state.player = player.get_actor_location()
+    state.rotation = controller.get_control_rotation()
+    for field in ("elapsed", "cooldown", "weapon_clock", "pickup_flash", "berserk_flash"):
+        setattr(state, field, float(getattr(mode, field)))
+    for field in ("weapon_event", "flash_variant", "kills", "item_count"):
+        setattr(state, field, int(getattr(mode, field)))
+    for field in ("won", "secret_exit", "dead"):
+        setattr(state, field, bool(getattr(mode, field)))
+    state.weapon_action = mode.weapon_action
+    state.secrets = sorted(mode.secrets)
+    state.triggered = sorted(mode.triggered)
+    state.switches = sorted(mode.switches)
+    state.switch_timers = [savegame.SwitchTimer(line=i, timer=t) for i, t in mode.switch_timers.items()]
+    state.doors = [
+        savegame.SavedDoor(sector=i, **{f: entry[f] for f in DOOR_FIELDS if f in entry})
+        for i, entry in mode.doors.items()
+    ]
+    state.movers = [
+        savegame.SavedMover(sector=i, **{f: entry[f] for f in MOVER_FIELDS if f in entry})
+        for i, entry in mode.movers.items()
+    ]
+    state.ceilings = [
+        savegame.SavedCeiling(sector=i, **{f: entry[f] for f in CEILING_FIELDS if f in entry})
+        for i, entry in mode.ceilings.items()
+    ]
+    state.objects = objects
+    version, words, gauss = random.getstate()
+    state.random_version = version
+    state.random_words = [savegame.signed_word(word) for word in words]
+    state.random_has_gauss = gauss is not None
+    state.random_gauss = gauss if gauss is not None else 0.0
+    return state
 
 
 def save_game(mode: Any, slot: int) -> bool:
@@ -434,7 +466,7 @@ def save_game(mode: Any, slot: int) -> bool:
         mode.notice, mode.notice_timer = "START A GAME BEFORE SAVING", 3.0
         return False
     try:
-        write_save(save_root(), slot, snapshot(mode))
+        savegame.write_save(slot, snapshot(mode))
     except (OSError, ValueError, TypeError) as error:
         mode.notice, mode.notice_timer = f"SAVE FAILED: {error}", 4.0
         return False
@@ -442,76 +474,82 @@ def save_game(mode: Any, slot: int) -> bool:
     return True
 
 
-def tuples(value: Any) -> Any:
-    return tuple(tuples(v) for v in value) if isinstance(value, list) else value
-
-
 def load_game(mode: Any, slot: int) -> bool:
     if mode.networked:
         mode.notice, mode.notice_timer = "LOADING IS SINGLE-PLAYER ONLY", 3.0
         return False
     try:
-        state = read_save(save_root(), slot, mode.data["source_sha256"])
-    except (OSError, ValueError, KeyError) as error:
+        state = savegame.read_save(slot, mode.data["source_sha256"])
+    except (OSError, ValueError) as error:
         mode.notice, mode.notice_timer = f"LOAD FAILED: {error}", 4.0
         return False
     g = game()
-    load_level(mode, state["map"], state["skill"])
+    load_level(mode, state.map, state.skill)
     # Powerups are kept as expiry times on the level clock, so the clock is restored before them.
-    mode.elapsed = state["elapsed"]
-    apply_inventory(mode, state["inventory"])
-    mode.keys = set(state["keys"])
-    mode.key_kinds = state.get("key_kinds", {})
-    for field, default in (
-        ("weapon_action", ""),
-        ("weapon_clock", 0.0),
-        ("weapon_event", 0),
-        ("flash_variant", 0),
-        ("pickup_flash", 0.0),
-        ("berserk_flash", 0.0),
+    mode.elapsed = state.elapsed
+    apply_inventory(mode, inventory_of(state.inventory))
+    mode.keys = set(state.keys)
+    mode.key_kinds = {saved.colour: saved.kind for saved in state.key_kinds}
+    for field in (
+        "weapon_action",
+        "weapon_clock",
+        "weapon_event",
+        "flash_variant",
+        "pickup_flash",
+        "berserk_flash",
+        "cooldown",
+        "kills",
+        "item_count",
+        "won",
+        "secret_exit",
+        "dead",
     ):
-        setattr(mode, field, state.get(field, default))
-    for field in ("cooldown", "kills", "item_count", "won", "secret_exit", "dead"):
-        setattr(mode, field, state[field])
-    mode.secrets, mode.triggered = set(state["secrets"]), set(state["triggered"])
-    mode.switch_timers = {int(i): value for i, value in state.get("switch_timers", {}).items()}
-    for i in state.get("switches", []):
+        setattr(mode, field, getattr(state, field))
+    mode.secrets, mode.triggered = set(state.secrets), set(state.triggered)
+    mode.switch_timers = {saved.line: saved.timer for saved in state.switch_timers}
+    for i in state.switches:
         set_switch(mode, i, False)
-    for field in ("doors", "movers", "ceilings"):
-        collection = getattr(mode, field)
-        for index, saved in state[field].items():
-            entry = collection[int(index)]
-            entry.update({key: math.inf if value is None else value for key, value in saved.items()})
+    for collection, saved_list, fields in (
+        (mode.doors, state.doors, DOOR_FIELDS),
+        (mode.movers, state.movers, MOVER_FIELDS),
+        (mode.ceilings, state.ceilings, CEILING_FIELDS),
+    ):
+        for saved in saved_list:
+            entry = collection[saved.sector]
+            entry.update({field: getattr(saved, field) for field in fields})
             if entry["actor"]:
-                offset = entry["height"] if field == "doors" else entry["offset"]
+                offset = entry["height"] if collection is mode.doors else entry["offset"]
                 entry["actor"].set_actor_location(ue.Vector(0, 0, offset * g.SCALE), False, True)
     existing = {obj.thing_id: obj for obj in mode.objects if getattr(obj, "thing_id", -1) >= 0}
+    saved_things = list(state.objects)
     retained = []
-    for saved in state["objects"]:
-        obj = existing.pop(saved["id"], None) if saved["id"] >= 0 else None
+    for saved in saved_things:
+        obj = existing.pop(saved.id, None) if saved.id >= 0 else None
+        position = saved.position
         if obj is None:
             cls = {
                 "enemy": g.DoomDemon,
                 "barrel": g.DoomBarrel,
                 "item": g.DoomSprite,
                 "projectile": g.DoomProjectile,
-            }[saved["role"]]
-            obj = ue.spawn_actor(cls, location=ue.Vector(*saved["position"]))
-        obj.thing_id = saved["id"]
-        obj.set_actor_location(ue.Vector(*saved["position"]), False, True)
-        for field, value in saved["fields"].items():
+            }[saved.role]
+            obj = ue.spawn_actor(cls, location=position)
+        obj.thing_id = saved.id
+        obj.set_actor_location(position, False, True)
+        fields = thing_fields(saved)
+        for field, value in fields.items():
             setattr(obj, field, value)
         if isinstance(obj, g.DoomDemon):
             obj.attack_sound = g.DEMONS[obj.type_id][2]
             obj.frame = ""
-            obj.image(saved["fields"].get("frame", obj.prefix + "A1"))
+            obj.image(fields.get("frame", obj.prefix + "A1"))
             if obj.dead:
                 obj.character_movement.set_movement_mode(ue.EMovementMode.MOVE_None)
                 obj.capsule_component.set_collision_enabled(ue.ECollisionEnabled.NoCollision)
         else:
             obj.key = ""
-            obj.image(saved["fields"].get("key", "BAR1A0"))
-            obj.set_actor_hidden_in_game(saved.get("hidden", bool(getattr(obj, "taken", False))))
+            obj.image(fields.get("key", "BAR1A0"))
+            obj.set_actor_hidden_in_game(saved.hidden)
             if isinstance(obj, g.DoomBarrel) and obj.exploded:
                 obj.body.set_collision_enabled(ue.ECollisionEnabled.NoCollision)
         retained.append(obj)
@@ -520,18 +558,20 @@ def load_game(mode: Any, slot: int) -> bool:
     mode.objects = retained
     mode.enemies = [obj for obj in retained if isinstance(obj, g.DoomDemon)]
     by_id = {obj.thing_id: obj for obj in retained if obj.thing_id >= 0}
-    for obj, saved in zip(retained, state["objects"], strict=True):
+    for obj, saved in zip(retained, saved_things, strict=True):
         if isinstance(obj, g.DoomProjectile) and not obj.friendly:
-            obj.owner = by_id.get(saved.get("owner_id", -1))
+            obj.owner = by_id.get(saved.owner_id)
     player: Any = ue.GameplayStatics.get_player_pawn(0)
     controller: Any = ue.GameplayStatics.get_player_controller(0)
     assert player and controller
-    player.set_actor_location(ue.Vector(*state["player"]), False, True)
+    player.set_actor_location(state.player, False, True)
     player.character_movement.stop_movement_immediately()
-    controller.set_control_rotation(ue.Rotator(*state["rotation"]))
-    controller.yaw = state["rotation"][1]
+    controller.set_control_rotation(state.rotation)
+    controller.yaw = float(controller.get_control_rotation()[1])
     mode.last_xy = None
-    random.setstate(tuples(state["random_state"]))
+    gauss = state.random_gauss if state.random_has_gauss else None
+    words = tuple(savegame.unsigned_word(word) for word in state.random_words)
+    random.setstate((state.random_version, words, gauss))
     mode.notice, mode.notice_timer = f"LOADED SLOT {slot}", 2.0
     from doom.geometry import refresh
 
@@ -540,13 +580,7 @@ def load_game(mode: Any, slot: int) -> bool:
 
 
 def slot_label(slot: int) -> str:
-    try:
-        import json
-
-        state = json.loads(save_path(save_root(), slot).read_text(encoding="utf-8"))
-        return f"{slot}: {state['map']} / SKILL {state['skill']} / {int(state['elapsed'])}s"
-    except (OSError, ValueError, KeyError, IndexError):
-        return f"{slot}: EMPTY"
+    return savegame.slot_label(slot)
 
 
 def setup_graphics(mode: Any) -> dict[int, str]:

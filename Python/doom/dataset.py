@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 import shutil
-import sys
 from pathlib import Path
 
 PYTHON = Path(__file__).resolve().parent.parent
@@ -69,17 +68,6 @@ def find_wad() -> Path:
         f"No WAD found for data set {NAME!r} (DOOM_IWAD). Set DOOM_WAD to the file, or put "
         f"{'/'.join(WAD_NAMES)} in the git-ignored wads/ folder at the repo root. See README.md."
     )
-
-
-def save_root() -> Path:
-    """The folder that holds saves/: the extraction folder, except on the web, where the staged files are
-    read-only and the project's Saved folder is the browser's persistent storage."""
-    if sys.platform == "emscripten":
-        import ue
-
-        # The class's own name: script-name aliases such as `ue.Paths` exist only in the editor.
-        return Path(ue.KismetSystemLibrary.get_project_saved_directory()) / "Doom" / NAME
-    return ASSETS
 
 
 def extracted() -> bool:

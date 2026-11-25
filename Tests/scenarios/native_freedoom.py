@@ -44,6 +44,7 @@ async def demo(args: list[str]) -> dict[str, Any]:
     for leaf in ORIGINAL_MODULES:
         module = importlib.import_module(f"doom.{leaf}")
         assert isinstance(module.__loader__, ExtensionFileLoader), (leaf, module.__loader__)
+        assert module.__file__ is not None, leaf
         path = Path(module.__file__)
         assert path.suffix == ".pyd" and path.is_file()
         assert not path.with_name(leaf + ".py").exists()

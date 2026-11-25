@@ -1,14 +1,13 @@
-"""Doom data readers handle valid minimal levels and damaged local saves."""
+"""Doom data readers handle valid minimal levels; saves of other data, maps or skills are refused."""
 
 from __future__ import annotations
 
-import json
 import struct
 from pathlib import Path
 
 import pytest
 
-from doom.rules import read_save, save_path
+from doom.rules import check_save, save_path
 from doom.wad import Wad
 
 
@@ -58,11 +57,29 @@ def test_sector_query_with_one_subsector_and_no_bsp_nodes() -> None:
     assert level.locate_sector(32, 32) == 7
 
 
-@pytest.mark.parametrize("state", [None, [], 7, "invalid"])
-def test_non_object_save_data_raises_a_load_error(tmp_path: Path, state: object) -> None:
-    path = save_path(tmp_path, 0)
-    path.parent.mkdir()
-    path.write_text(json.dumps(state), encoding="utf-8")
+def test_save_slots_are_named_per_data_set() -> None:
+    assert save_path("FreedoomLocal", 0) == "FreedoomLocal-slot-0"
+    assert save_path("DoomLocal", 5) == "DoomLocal-slot-5"
+    for slot in (-1, 6):
+        with pytest.raises(ValueError, match="Invalid save slot"):
+            save_path("FreedoomLocal", slot)
 
-    with pytest.raises(ValueError, match="Invalid save data"):
-        read_save(tmp_path, 0, "source")
+
+@pytest.mark.parametrize(
+    ("version", "source", "marker", "skill", "error"),
+    [
+        (2, "data", "E1M1", 3, "another game data version"),
+        (1, "other", "E1M1", 3, "another game data version"),
+        (1, "data", "E5M1", 3, "Invalid saved map"),
+        (1, "data", "E1M1", 6, "Invalid saved difficulty"),
+    ],
+)
+def test_saves_of_other_data_maps_or_skills_are_refused(
+    version: int, source: str, marker: str, skill: int, error: str
+) -> None:
+    with pytest.raises(ValueError, match=error):
+        check_save(version, source, "data", marker, skill)
+
+
+def test_a_save_of_this_data_is_accepted() -> None:
+    check_save(1, "data", "data", "E4M9", 5)

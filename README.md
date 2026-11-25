@@ -121,8 +121,11 @@ Cheat console (F1 or Escape to close; Up/Down recall history), the Doom cheat co
 The automap (Tab) shows walls and special lines; with the automap power (`IDBEHOLDA`) it also shows the steps and
 ledges, with `IDDT` every line and then the monsters and items.
 
-Saves are JSON files in `<extraction folder>/saves/slot-N.json` (slot 0 is the autosave at level start,
-slot 5 the quick save), bound to the SHA-256 of the imported data.
+Saves are the engine's own save games: a `DoomSave` object (`savegame.py`) in slot `<data set>-slot-N`, which the
+engine keeps as `Saved/SaveGames/FreedoomLocal-slot-N.sav` (in a packaged game, under the user's local
+application data). Slot 0 is the autosave at level start, slot 5 the quick save; a save is bound to the SHA-256 of
+the imported data. Unreal properties have no maps or unsigned numbers, so the game's dicts are kept as lists of
+structs that carry their key, and the `random` module's state as signed 32-bit words.
 
 Crushers follow `P_ChangeSector`: a ceiling (linedef specials 6, 25, 44, 49, 72, 73, 77, 141) that closes on
 a marine, a monster or a barrel deals 10 damage every fourth tic (in a deathmatch the level's kill is a suicide,
@@ -359,8 +362,9 @@ check reports `skipped` when the data set is not extracted; it backs up and rest
 | `level` | `LevelRuntime`: the level on one machine (data, materials, geometry, queries), shared by the game mode and the game state |
 | `state` | `DoomPlayerState` (one marine's inventory) and `DoomGameState` (map, moving sectors, totals), both replicated |
 | `net` | Network helpers: roles, per-instance replication, player lookup, the host's options (`DOOM_MATCH`...) |
-| `campaign` | Menus, level loading and progression, save/load |
-| `rules` | Static rules: monsters, weapons, items, skills, the network game modes, versioned save format |
+| `campaign` | Menus, level loading and progression, save/load (the snapshot of a game and its restore) |
+| `savegame` | `DoomSave` (a `SaveGame`) and the structs it holds; writing, reading and labelling the slots |
+| `rules` | Static rules: monsters, weapons, items, skills, the network game modes, the save slots' names and checks |
 | `specials` | Linedef actions: doors, lifts, switches, teleports, crushers |
 | `geometry` | Live sector walls and sky-ceiling collision |
 | `world` | Level actors: geometry, sprites, barrels, effects |
@@ -401,8 +405,8 @@ Import the Freedoom data set (above, `DOOM_IWAD=freedoom1`), then package:
 
 The script stages the game's Python but not the retail data set, nor what only the import reads (sounds, sprites),
 and fails if retail data reaches the output. Without `DOOM_IWAD`, the game picks the retail data set when it is
-extracted and Freedoom otherwise, so the web build needs no setting. On the web, saves go to the browser's
-persistent storage (the project's `Saved` folder) instead of the read-only extraction folder.
+extracted and Freedoom otherwise, so the web build needs no setting. Saves go where the engine keeps save games,
+which on the web is the browser's persistent storage.
 
 The page settings are in `Config/DefaultEngine.ini` (`[/Script/WasmTargetPlatform.WasmTargetSettings]`): the game
 starts on a click (browsers allow sound only after one), phones are refused (keyboard and mouse), only the forward

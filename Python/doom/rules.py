@@ -1,11 +1,9 @@
-"""Local Ultimate Doom campaign rules, inventory and versioned save storage."""
+"""Local Ultimate Doom campaign rules, inventory, and the save slots' names and checks."""
 
 from __future__ import annotations
 
 import json
-import os
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, NamedTuple
 
 from doom.dataset import ASSETS
@@ -331,28 +329,19 @@ def skill_flag(skill: int) -> int:
     return 1 if skill <= 2 else 2 if skill == 3 else 4
 
 
-def save_path(folder: Path, slot: int) -> Path:
+def save_path(prefix: str, slot: int) -> str:
+    """The name of save slot `slot` (0 to 5) of the data set whose slots start with `prefix`: the engine keeps
+    it as Saved/SaveGames/<name>.sav (savegame.write_save)."""
     if not 0 <= slot <= 5:
         raise ValueError("Invalid save slot")
-    return folder / "saves" / f"slot-{slot}.json"
+    return f"{prefix}-slot-{slot}"
 
 
-def write_save(folder: Path, slot: int, state: dict[str, Any]) -> None:
-    path = save_path(folder, slot)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(".tmp")
-    temporary.write_text(json.dumps({"version": 1, **state}, allow_nan=False), encoding="utf-8")
-    os.replace(temporary, path)
-
-
-def read_save(folder: Path, slot: int, source_sha256: str) -> dict[str, Any]:
-    state = json.loads(save_path(folder, slot).read_text(encoding="utf-8"))
-    if not isinstance(state, dict):
-        raise ValueError("Invalid save data: expected an object")
-    if state.get("version") != 1 or state.get("source_sha256") != source_sha256:
+def check_save(version: int, source_sha256: str, expected_sha256: str, marker: str, skill: int) -> None:
+    """Refuse a save made for other game data, or of a map or a skill that does not exist."""
+    if version != 1 or source_sha256 != expected_sha256:
         raise ValueError("Save belongs to another game data version")
-    if state.get("map") not in [f"E{e}M{m}" for e in range(1, 5) for m in range(1, 10)]:
+    if marker not in [f"E{e}M{m}" for e in range(1, 5) for m in range(1, 10)]:
         raise ValueError("Invalid saved map")
-    if state.get("skill") not in range(1, 6):
+    if skill not in range(1, 6):
         raise ValueError("Invalid saved difficulty")
-    return state

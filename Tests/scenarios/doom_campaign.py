@@ -10,9 +10,9 @@ from __future__ import annotations
 from typing import Any
 
 import ue
-from doom import campaign, geometry, rules, specials
+from doom import campaign, geometry, rules, savegame, specials
 from doom import runtime as g
-from doom.dataset import ASSETS, NAME, extracted, save_root
+from doom.dataset import ASSETS, NAME, extracted
 from ue import agent
 
 
@@ -87,14 +87,7 @@ def _check_live_walls(mode: Any, player: ue.Actor) -> int:
 async def demo(_args: list[str]) -> dict[str, Any]:
     if not extracted():
         return dict(skipped=f"no extracted Doom data for data set {NAME!r} in {ASSETS}; see README.md")
-    slots = (0, 4)
-    save_dir = save_root() / "saves"
-    backups = {
-        slot: (save_dir / f"slot-{slot}.json").read_bytes()
-        if (save_dir / f"slot-{slot}.json").exists()
-        else None
-        for slot in slots
-    }
+    backups = {slot: savegame.stored(slot) for slot in (0, 4)}  # the autosave and the slot the check uses
     missing_thing_types: set[int] = set()
     live_wall_checks = 0
     try:
@@ -272,11 +265,5 @@ async def demo(_args: list[str]) -> dict[str, Any]:
             missing_thing_types=sorted(missing_thing_types),
         )
     finally:
-        for slot, data in backups.items():
-            path = save_dir / f"slot-{slot}.json"
-            if data is None:
-                if path.exists():
-                    path.unlink()
-            else:
-                save_dir.mkdir(parents=True, exist_ok=True)
-                path.write_bytes(data)
+        for slot, state in backups.items():
+            savegame.restore(slot, state)
