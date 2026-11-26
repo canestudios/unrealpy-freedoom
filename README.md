@@ -378,6 +378,7 @@ check reports `skipped` when the data set is not extracted; it backs up and rest
 | `visual` | Sprite view selection (rotations, mirrored lumps) |
 | `hud` | `DoomHUD`: status bar, weapon, automap, menus |
 | `console` | F1 cheat console: the cheat codes (on a client they go to the server through `to_server_cheat`) |
+| `lighting` | Lumen lighting when the project settings allow it, otherwise Doom's flat unlit look (see Lighting) |
 | `music` | `DoomMusic`: plays the rendered score as looping 2D Unreal audio |
 | `common`, `runtime` | Shared constants/helpers, and a facade namespace over them |
 
