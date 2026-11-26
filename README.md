@@ -1,10 +1,10 @@
 # Freedoom on UnrealPy
 
-Freedoom runs in Unreal Engine with its player, monsters, weapons and HUD written in [Python](Python/doom). Unreal renders the levels, and the desktop game supports co-op and deathmatch.
+Freedoom runs in Unreal Engine 5.8 on Windows and Linux with its player, monsters, weapons and HUD written in [Python](Python/doom). Unreal renders the levels, and the game supports co-op and deathmatch.
 
-[Play the single-player demo](https://canestudios.github.io/unrealpy-freedoom/) or [watch the gameplay clip](https://canestudios.github.io/unrealpy-freedoom/watch/).
+The WebAssembly build is on the `experiment/wasm` branch (UE 5.9 Preview).
 
-The browser demo uses a private UE 5.9 Preview build of UnrealPy. Start with the [monster behavior](Python/doom/monsters.py) or the [game mode](Python/doom/mode.py) to explore the code. A small C++ module supplies the Unreal project target. [Plugin compatibility](https://unrealpy.canestudios.xyz/docs/getting-started/compatibility/)
+Start with the [monster behavior](Python/doom/monsters.py) or the [game mode](Python/doom/mode.py) to explore the code. A small C++ module supplies the Unreal project target. [Plugin compatibility](https://unrealpy.canestudios.xyz/docs/getting-started/compatibility/)
 
 It is an independent reimplementation, written from how the game plays rather than from id Software's source
 release, and contains none of that code. Animation timings and the monsters' decision-making are this project's
@@ -16,18 +16,18 @@ extracted from a WAD you own (or the free Freedoom) at import time into git-igno
 
 ## Requirements
 
-- Unreal Engine 5.9 Preview (Windows; the commands below use the Epic Games launcher's install path as `<UE>`).
+- Unreal Engine 5.8 on Windows or Linux (the commands below are for Windows and use the engine's install folder
+  as `<UE>`; on Linux the binaries are `<UE>/Engine/Binaries/Linux/UnrealEditor` and `UnrealEditor-Cmd`).
 - The **UnrealPy** plugin and its companion **ScriptCore**. They are distributed separately and are not part of this
   repository: copy them into `Plugins/` (`Plugins/UnrealPy`, `Plugins/ScriptCore`) or install them into the engine.
 - A WAD (below).
 
 The project turns Unreal's engine plugins off by default (`DisableEnginePluginsByDefault` in `UnrealPyDoom.uproject`)
 and enables only what the game uses: procedural meshes for the levels, Enhanced Input, the animation compression
-the engine expects, the network driver for co-op on desktop, each platform's device profile selector, and in the
+the engine expects, the network driver for co-op, each platform's device profile selector, and in the
 editor the asset scripting the importer uses, the Content Browser's asset view and Cascade (the engine's renderer
-settings expect its console variables, and cooking fails without them). The other plugins cost download
-size and are never touched (the web build's code is about 40% smaller this way), so the editor opens without most
-of the tools a new project shows.
+settings expect its console variables, and cooking fails without them). The other plugins cost build and package
+size and are never touched, so the editor opens without most of the tools a new project shows.
 
 Open `UnrealPyDoom.uproject` in the editor once. On that first start UnrealPy creates the Python environment
 (`.venv`, from `pyproject.toml` and `uv.lock`; it needs internet once) and the `ue` type stubs that editors and the
@@ -382,52 +382,6 @@ check reports `skipped` when the data set is not extracted; it backs up and rest
 | `common`, `runtime` | Shared constants/helpers, and a facade namespace over them |
 
 The classes are found through the `doom` class package (`Config/DefaultUnrealPy.ini`, `+ClassPackages=doom`).
-
-## Web build (Unreal Engine 5.9, Wasm)
-
-The game also runs in a browser: Unreal Engine 5.9's WebAssembly target, with UnrealPy's web Python (CPython
-and NumPy compiled to WebAssembly and linked into the game). Only the Freedoom data set is packaged. The web
-Python is prebuilt: the packaging command downloads the release UnrealPy pins, from
-[canestudios/cpython-emscripten-static](https://github.com/canestudios/cpython-emscripten-static), the first time it
-runs, so neither WSL nor a Linux machine is needed.
-
-Once per machine: Unreal Engine 5.9 with the Wasm platform, Visual Studio with the C++ workload, and the Emscripten
-SDK version the engine requires (6.0.10), with `WASM_EMSDK_ROOT` pointing at it:
-
-```powershell
-git clone https://github.com/emscripten-core/emsdk C:\emsdk
-C:\emsdk\emsdk.bat install 6.0.10; C:\emsdk\emsdk.bat activate 6.0.10
-[Environment]::SetEnvironmentVariable('WASM_EMSDK_ROOT', 'C:\emsdk', 'User')   # then restart the shell
-```
-
-Import the Freedoom data set (above, `DOOM_IWAD=freedoom1`), then package:
-
-```powershell
-.\tools\package-web.ps1          # Saved\Web\Wasm is the site; Saved\Web\Play_UnrealPyDoom.bat serves it locally
-```
-
-The script stages the game's Python but not the retail data set, nor what only the import reads (sounds, sprites),
-and fails if retail data reaches the output. Without `DOOM_IWAD`, the game picks the retail data set when it is
-extracted and Freedoom otherwise, so the web build needs no setting. Saves go where the engine keeps save games,
-which on the web is the browser's persistent storage.
-
-The page settings are in `Config/DefaultEngine.ini` (`[/Script/WasmTargetPlatform.WasmTargetSettings]`): the game
-starts on a click (browsers allow sound only after one), phones are refused (keyboard and mouse), only the forward
-renderer is cooked, and the service worker adds the cross-origin isolation headers, so a static host such as
-GitHub Pages can serve the `Wasm` folder as it is (never upload `Wasm-Debug`). Multiplayer is not available in the
-browser: a page cannot host a game or open UDP sockets.
-
-To publish on this repository's GitHub Pages (Settings > Pages > Source: GitHub Actions):
-
-```powershell
-.\tools\deploy-web.ps1           # uploads web.zip to the `web-build` release and runs the Pages workflow
-```
-
-The build cannot be made on GitHub's runners (it needs the engine and the plugin), so the workflow
-(`.github/workflows/pages.yml`) publishes the uploaded zip as a Pages artifact. Publishing that way runs no Jekyll,
-which would drop the files whose names start with `_` (`__init__.py`...), and has no 100 MB per-file limit.
-
-The watch page and credits deploy from `web/` alongside the packaged game.
 
 ## Licences and contact
 

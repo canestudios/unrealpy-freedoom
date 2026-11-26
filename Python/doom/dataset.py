@@ -17,8 +17,8 @@ DATASETS: dict[str, tuple[tuple[str, ...], Path, str]] = {
 
 
 def _default_name() -> str:
-    """Without DOOM_IWAD: the retail data set, unless only Freedoom is extracted (a shared build, the web one
-    included, carries Freedoom only and has no environment to set)."""
+    """Without DOOM_IWAD: the retail data set, unless only Freedoom is extracted (a shared build carries
+    Freedoom only and has no environment to set)."""
     extracted = [name for name, (_, folder, _) in DATASETS.items() if (folder / "manifest.json").is_file()]
     return extracted[0] if extracted else "doom"
 

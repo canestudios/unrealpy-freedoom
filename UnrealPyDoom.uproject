@@ -1,6 +1,6 @@
 {
   "FileVersion": 3,
-  "EngineAssociation": "5.9",
+  "EngineAssociation": "5.8",
   "Category": "",
   "Description": "Doom rebuilt as Python gameplay on the UnrealPy plugin.",
   "Modules": [
@@ -37,10 +37,7 @@
     },
     {
       "Name": "OnlineSubsystemUtils",
-      "Enabled": true,
-      "PlatformDenyList": [
-        "Wasm"
-      ]
+      "Enabled": true
     },
     {
       "Name": "WindowsDeviceProfileSelector",
@@ -55,13 +52,6 @@
       "PlatformAllowList": [
         "Linux",
         "LinuxArm64"
-      ]
-    },
-    {
-      "Name": "WasmDeviceProfileSelector",
-      "Enabled": true,
-      "PlatformAllowList": [
-        "Wasm"
       ]
     },
     {

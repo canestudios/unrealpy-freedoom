@@ -1,7 +1,0 @@
-.demo-links { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; }
-.demo-links a { color: #ffe49d; text-underline-offset: .2em; }
-.demo-links a:focus-visible { outline: 2px solid #ffe49d; outline-offset: 3px; }
-#demo-start-links { display: none; position: fixed; z-index: 6; left: 50%; bottom: max(1rem, env(safe-area-inset-bottom)); transform: translateX(-50%); width: max-content; max-width: calc(100% - 3rem); padding: .55rem .9rem; border-radius: .35rem; background: #161a20ed; }
-#cover:not([hidden]):not(.lifting):not(.unsupported):has(#ended[hidden]):not(:has(#error[style*="block"])) ~ #demo-start-links { display: flex; }
-#error .demo-links, #ended .demo-links { margin: .9rem 0; }
-#rotate svg { display: none; }

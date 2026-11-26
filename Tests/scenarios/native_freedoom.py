@@ -1,4 +1,4 @@
-"""Verify the Freedoom campaign in a packaged Win64 game built with NativeModules=doom.*."""
+"""Verify the Freedoom campaign in a packaged desktop game built with NativeModules=doom.*."""
 
 from __future__ import annotations
 
@@ -46,7 +46,7 @@ async def demo(args: list[str]) -> dict[str, Any]:
         assert isinstance(module.__loader__, ExtensionFileLoader), (leaf, module.__loader__)
         assert module.__file__ is not None, leaf
         path = Path(module.__file__)
-        assert path.suffix == ".pyd" and path.is_file()
+        assert path.suffix in (".pyd", ".so") and path.is_file()
         assert not path.with_name(leaf + ".py").exists()
         assert not path.with_name(leaf + ".pyc").exists()
         loaded[leaf] = str(path)

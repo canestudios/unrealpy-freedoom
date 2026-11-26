@@ -447,8 +447,7 @@ def visual_materials(tools: ue.AssetTools) -> None:
             noise.output_max = 0.65
             assert edit.connect_material_expressions(moving, "", noise, "")
             # Vanilla fuzz shows the pixels behind the silhouette, darkened (colormap 6). Black (no emissive)
-            # at opacity 1 - noise leaves noise x the colour behind, without reading the scene colour, which
-            # the mobile forward renderer of the web build cannot do.
+            # at opacity 1 - noise leaves noise x the colour behind, without reading the scene colour.
             darkness = edit.create_material_expression(mat, ue.MaterialExpressionOneMinus, -200, 500)
             assert edit.connect_material_expressions(noise, "", darkness, "")
             uv, inside = sprite_uv(mat)

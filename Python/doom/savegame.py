@@ -1,5 +1,4 @@
-"""The saved game: an engine SaveGame object in a slot that the engine keeps (Saved/SaveGames/<slot>.sav, the
-browser's persistent storage on the web).
+"""The saved game: an engine SaveGame object in a slot that the engine keeps (Saved/SaveGames/<slot>.sav).
 
 Unreal properties have no maps, sets or unsigned numbers. The snapshot's dicts are lists of structs that carry
 their key, and Python's generator state is kept as signed 32-bit words.
