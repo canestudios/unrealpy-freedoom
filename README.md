@@ -41,7 +41,7 @@ $uecmd = "<UE>\Engine\Binaries\Win64\UnrealEditor-Cmd.exe"  # the same, headless
 $project = "<repo>\UnrealPyDoom.uproject"
 ```
 
-`-UnrealPyRun=module:function` makes UnrealPy call that Python function once the engine is up, and
+`-UnrealPyRun=module:function` makes UnrealPy call that Python function once the engine is up and then exit (`-UnrealPyKeepAlive` keeps the game running), and
 `-UnrealPyResult=<file.json>` writes what it returned (or the error) to a file.
 
 ## Get a WAD
@@ -91,7 +91,7 @@ are not rendered again; playback needs no environment variables.
 ## Play
 
 ```powershell
-& $ue $project -game -windowed -ResX=1280 -ResY=720 "-UnrealPyRun=doom.game:play"
+& $ue $project -game -windowed -ResX=1280 -ResY=720 "-UnrealPyRun=doom.game:play" -UnrealPyKeepAlive
 ```
 
 Set `DOOM_IWAD` as for the import when you play the Freedoom data set.
@@ -153,11 +153,11 @@ The same from the command line, in an editor build (a Shipping package has no `-
 
 ```powershell
 # the host
-& $ue $project -game -windowed -ResX=1280 -ResY=720 "-UnrealPyRun=doom.game:host"
+& $ue $project -game -windowed -ResX=1280 -ResY=720 "-UnrealPyRun=doom.game:host" -UnrealPyKeepAlive
 # every other player: DOOM_SERVER is the host's address (default 127.0.0.1; the game uses UDP port 7777,
 # "address:port" selects another one)
 $env:DOOM_SERVER = "192.168.1.20"
-& $ue $project -game -windowed -ResX=1280 -ResY=720 "-UnrealPyRun=doom.game:join"
+& $ue $project -game -windowed -ResX=1280 -ResY=720 "-UnrealPyRun=doom.game:join" -UnrealPyKeepAlive
 ```
 
 Every machine needs the extracted data and imported assets of the same data set (see above): a client builds the
@@ -235,7 +235,7 @@ game mode reads them (`net.host_options`):
 
 ```powershell
 $env:DOOM_MATCH = "deathmatch"; $env:DOOM_FRAGLIMIT = "10"; $env:DOOM_TIMELIMIT = "15"; $env:DOOM_MAP = "E1M5"
-& $ue $project -game -windowed -ResX=1280 -ResY=720 "-UnrealPyRun=doom.game:host"
+& $ue $project -game -windowed -ResX=1280 -ResY=720 "-UnrealPyRun=doom.game:host" -UnrealPyKeepAlive
 ```
 
 `host` also takes the options as `key=value` arguments: a JSON list such as
