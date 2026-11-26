@@ -180,7 +180,15 @@ class DoomSprite(ue.Actor):
             self.set_actor_tick_enabled(True)
 
     def actor_end_overlap(self, other_actor: ue.Actor | None) -> None:
-        if isinstance(other_actor, player_mod.DoomMarine) and self.has_authority():
+        if not isinstance(other_actor, player_mod.DoomMarine):
+            return
+        try:
+            authority = self.has_authority()
+        except ue.StaleObjectError:
+            # A sprite destroyed while a marine overlaps it gets this event during its destruction, when its
+            # functions can no longer be called; its tick no longer matters then.
+            return
+        if authority:
             if self.always_tick:
                 self.set_actor_tick_interval(ANIMATION_STEP)
             else:
