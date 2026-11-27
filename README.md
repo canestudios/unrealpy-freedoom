@@ -1,10 +1,10 @@
 # Freedoom on UnrealPy
 
-Freedoom runs in Unreal Engine 5.8 on Windows and Linux with its player, monsters, weapons and HUD written in [Python](Content/Python/gameplay/doom). Unreal renders the levels, and the game supports co-op and deathmatch.
+Freedoom runs in Unreal Engine 5.8 on Windows and Linux with its player, monsters, weapons and HUD written in [Python](Content/Python/unrealpy/doom). Unreal renders the levels, and the game supports co-op and deathmatch.
 
 The WebAssembly build is on the `experiment/wasm` branch (UE 5.9 Preview).
 
-Start with the [monster behavior](Content/Python/gameplay/doom/monsters.py) or the [game mode](Content/Python/gameplay/doom/mode.py) to explore the code. A small C++ module supplies the Unreal project target. [Plugin compatibility](https://unrealpy.canestudios.xyz/docs/getting-started/compatibility/)
+Start with the [monster behavior](Content/Python/unrealpy/doom/monsters.py) or the [game mode](Content/Python/unrealpy/doom/mode.py) to explore the code. A small C++ module supplies the Unreal project target. [Plugin compatibility](https://unrealpy.canestudios.xyz/docs/getting-started/compatibility/)
 
 It is an independent reimplementation, written from how the game plays rather than from id Software's source
 release, and contains none of that code. Animation timings and the monsters' decision-making are this project's
@@ -58,10 +58,10 @@ For the selected data set, first match wins:
 3. `doom` only: the default Steam (`Ultimate Doom/base` or `rerelease`) and GOG install folders.
 
 If none exists the importer fails naming the data set and pointing here. `DOOM_IWAD` picks the data set
-(`doom` or `freedoom1`; unset, `doom` unless only Freedoom is extracted); each has its own extraction folder (`Content/Python/gameplay/doom_local[_freedoom1]/`)
+(`doom` or `freedoom1`; unset, `doom` unless only Freedoom is extracted); each has its own extraction folder (`Content/Python/unrealpy/doom_local[_freedoom1]/`)
 and Unreal content root (`/Game/DoomLocal`, `/Game/FreedoomLocal`). The extracted files are git-ignored.
 If you already imported a data set, move its extracted files from `Python/doom_local` or `Python/doom_local_freedoom1`
-into the matching directory under `Content/Python/gameplay/` before opening the project again.
+into the matching directory under `Content/Python/unrealpy/` before opening the project again.
 
 ## Import (once per data set)
 
@@ -70,8 +70,9 @@ $env:DOOM_IWAD = 'freedoom1'   # optional; default is doom
 & $uecmd $project -nullrhi -unattended -nosplash -nopause "-UnrealPyRun=Content/Python/editor/doom_importer.py:main"
 ```
 
-The [importer](Content/Python/editor/doom_importer.py) runs in the editor (no `-game`). It extracts maps, textures, sprites, sounds and music from the WAD
-and imports them as Unreal assets. After that the game no longer reads the WAD. It takes a few minutes.
+The [importer](Content/Python/editor/doom_importer.py) runs in the editor (no `-game`). It extracts maps,
+textures, sprites, sounds and music from the WAD and imports them as Unreal assets. After that the game no
+longer reads the WAD. It takes a few minutes.
 
 ## Music
 
@@ -355,7 +356,7 @@ cheats (`IDCLIP`, `IDBEHOLD`, `IDCHOPPERS`, `IDMYPOS`, `IDDT`, `IDMUS`, `IDDQD`,
 crushers (specials 73 and 77) kill a marine, kill a monster, gib a corpse and remove a dropped item. The campaign
 check reports `skipped` when the data set is not extracted; it backs up and restores save slots 0 and 4.
 
-## Modules (`Content/Python/gameplay/doom`)
+## Modules (`Content/Python/unrealpy/doom`)
 
 | Module | Role |
 | --- | --- |

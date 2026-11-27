@@ -6,13 +6,13 @@ import os
 import shutil
 from pathlib import Path
 
-GAMEPLAY = Path(__file__).resolve().parents[1]
-REPO = GAMEPLAY.parents[2]
+PROJECT_PYTHON = Path(__file__).resolve().parents[1]
+REPO = PROJECT_PYTHON.parents[2]
 
 # name -> (WAD file names looked up in wads/, local extraction folder, Unreal content root)
 DATASETS: dict[str, tuple[tuple[str, ...], Path, str]] = {
-    "doom": (("doom.wad",), GAMEPLAY / "doom_local", "/Game/DoomLocal"),
-    "freedoom1": (("freedoom1.wad",), GAMEPLAY / "doom_local_freedoom1", "/Game/FreedoomLocal"),
+    "doom": (("doom.wad",), PROJECT_PYTHON / "doom_local", "/Game/DoomLocal"),
+    "freedoom1": (("freedoom1.wad",), PROJECT_PYTHON / "doom_local_freedoom1", "/Game/FreedoomLocal"),
 }
 
 

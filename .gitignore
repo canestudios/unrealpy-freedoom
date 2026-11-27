@@ -28,7 +28,7 @@ __pycache__/
 # Doom data is never committed: WADs and everything extracted or imported from them
 /wads/
 /Python/doom_local*/
-/Content/Python/gameplay/doom_local_freedoom1/
+/Content/Python/unrealpy/doom_local_freedoom1/
 /Content/DoomLocal/
 /Content/FreedoomLocal/
 *.wad

@@ -5,4 +5,4 @@ repository. Put them here as `Plugins/ScriptCore` and `Plugins/UnrealPy` (both f
 install them into the engine. The plugin binaries load only in the engine version they were built for: use the
 Unreal Engine 5.8 builds.
 
-Use a build that supports the project's `Content/Python/gameplay` import root.
+Use a build that supports the project's `Content/Python/unrealpy` import root.

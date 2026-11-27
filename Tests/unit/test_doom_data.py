@@ -14,9 +14,10 @@ from doom.wad import Wad
 
 def test_extracted_data_and_wad_search_use_project_layout(monkeypatch: pytest.MonkeyPatch) -> None:
     project = Path(__file__).resolve().parents[2]
-    gameplay = project / "Content/Python/gameplay"
-    assert dataset.DATASETS["doom"][1] == gameplay / "doom_local"
-    assert dataset.DATASETS["freedoom1"][1] == gameplay / "doom_local_freedoom1"
+    project_python = project / "Content/Python/unrealpy"
+    assert project_python.name in {path.name for path in project_python.parent.iterdir()}
+    assert dataset.DATASETS["doom"][1] == project_python / "doom_local"
+    assert dataset.DATASETS["freedoom1"][1] == project_python / "doom_local_freedoom1"
 
     wad = project / "wads" / dataset.WAD_NAMES[0]
     monkeypatch.delenv("DOOM_WAD", raising=False)
