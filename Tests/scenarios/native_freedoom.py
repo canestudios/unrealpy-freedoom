@@ -19,7 +19,6 @@ ORIGINAL_MODULES = (
     "game",
     "geometry",
     "hud",
-    "importer",
     "level",
     "lighting",
     "mode",

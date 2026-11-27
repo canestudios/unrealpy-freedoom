@@ -345,7 +345,7 @@ class LevelRuntime:
                 if sprite
                 else lighting.parent_path("M_World", sky=sky)  # the sky stays flat-bright
             )
-            assert isinstance(parent, ue.MaterialInterface), "Run doom.importer:main in editor first"
+            assert isinstance(parent, ue.MaterialInterface), "Import the WAD in the editor (see README.md)"
             mat = ue.KismetMaterialLibrary.create_dynamic_material_instance(parent)
             assert mat is not None
             texture = self.texture(key, sprite)
@@ -365,7 +365,7 @@ class LevelRuntime:
         cache_key = (key, "fuzz")
         if cache_key not in self.materials:
             parent = ue.load_object(CONTENT + "/M_Fuzz.M_Fuzz")
-            assert isinstance(parent, ue.MaterialInterface), "Run doom.importer:main in editor first"
+            assert isinstance(parent, ue.MaterialInterface), "Import the WAD in the editor (see README.md)"
             mat = ue.KismetMaterialLibrary.create_dynamic_material_instance(parent)
             assert mat is not None
             mat.set_texture_parameter_value("DoomTexture", self.texture(key, True))

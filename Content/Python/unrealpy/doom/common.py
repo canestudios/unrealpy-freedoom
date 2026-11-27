@@ -202,7 +202,7 @@ def sprite_material(mode: Any, key: str, flipped: bool = False, fuzz: bool = Fal
         parent = ue.load_object(
             CONTENT + "/M_Fuzz.M_Fuzz" if fuzz else lighting.parent_path("M_SpriteBillboard")
         )
-        assert isinstance(parent, ue.MaterialInterface), "Run doom.importer:main in editor first"
+        assert isinstance(parent, ue.MaterialInterface), "Import the WAD in the editor (see README.md)"
         mat = ue.KismetMaterialLibrary.create_dynamic_material_instance(parent)
         assert mat is not None
         width, _, left, _ = mode.data["sprites"][key]

@@ -1,6 +1,6 @@
 """Ultimate Doom rebuilt from the user's IWAD using UnrealPy, not a Doom source port.
 
-First run doom.importer:main in the editor. Launch with doom.game:play.
+First run Content/Python/editor/doom_importer.py:main in the editor. Launch with doom.game:play.
 WASD, mouse, click, E, 1-7 weapons, Shift run, Tab automap, Escape menu,
 F5/F9 quick save/load. Locally owned assets only.
 """

@@ -1,0 +1,3 @@
+# Keep this directory present for StageExclude and ignore all extracted retail data.
+*
+!.gitignore

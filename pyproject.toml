@@ -13,19 +13,20 @@ dependencies = [
 dev = ["pytest", "ruff", "ty"]
 
 [tool.uv]
-# The game lives under Python/ and is put on sys.path by UnrealPy; nothing to build.
+# The game lives under Content/Python/unrealpy and is put on sys.path by UnrealPy; nothing to build.
 package = false
 
 [tool.pytest.ini_options]
 # Outside the engine only the unit tests run; the scenarios run in the engine (see README.md, Test).
 testpaths = ["Tests/unit"]
+pythonpath = ["Content/Python/unrealpy"]
 # Outside Unreal, `ue` runs on UnrealPy's engine-less fake.
 addopts = "-p unrealpy_testing.pytest_plugin"
 
 [tool.ruff]
 target-version = "py311"
 line-length = 110
-src = ["Python", "Plugins/UnrealPy/Content/Python"]
+src = ["Content/Python/unrealpy", "Plugins/UnrealPy/Content/Python"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
@@ -35,4 +36,4 @@ known-first-party = ["ue", "doom"]
 
 [tool.ty.environment]
 python = ".venv"
-extra-paths = ["Intermediate/PythonStubs", "Python", "Plugins/UnrealPy/Content/Python"]
+extra-paths = ["Intermediate/PythonStubs", "Content/Python/unrealpy", "Plugins/UnrealPy/Content/Python"]
