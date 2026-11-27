@@ -6,13 +6,13 @@ import os
 import shutil
 from pathlib import Path
 
-PYTHON = Path(__file__).resolve().parent.parent
-REPO = PYTHON.parent
+GAMEPLAY = Path(__file__).resolve().parents[1]
+REPO = GAMEPLAY.parents[2]
 
 # name -> (WAD file names looked up in wads/, local extraction folder, Unreal content root)
 DATASETS: dict[str, tuple[tuple[str, ...], Path, str]] = {
-    "doom": (("doom.wad",), PYTHON / "doom_local", "/Game/DoomLocal"),
-    "freedoom1": (("freedoom1.wad",), PYTHON / "doom_local_freedoom1", "/Game/FreedoomLocal"),
+    "doom": (("doom.wad",), GAMEPLAY / "doom_local", "/Game/DoomLocal"),
+    "freedoom1": (("freedoom1.wad",), GAMEPLAY / "doom_local_freedoom1", "/Game/FreedoomLocal"),
 }
 
 
@@ -71,7 +71,7 @@ def find_wad() -> Path:
 
 
 def extracted() -> bool:
-    """True once `doom.importer:main` has extracted this data set (no WAD needed after)."""
+    """True once the editor importer has extracted this data set. The WAD is no longer required."""
     return (ASSETS / "manifest.json").is_file()
 
 
