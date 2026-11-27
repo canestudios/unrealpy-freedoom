@@ -7,8 +7,21 @@ from pathlib import Path
 
 import pytest
 
+from doom import dataset
 from doom.rules import check_save, save_path
 from doom.wad import Wad
+
+
+def test_extracted_data_and_wad_search_use_project_layout(monkeypatch: pytest.MonkeyPatch) -> None:
+    project = Path(__file__).resolve().parents[2]
+    gameplay = project / "Content/Python/gameplay"
+    assert dataset.DATASETS["doom"][1] == gameplay / "doom_local"
+    assert dataset.DATASETS["freedoom1"][1] == gameplay / "doom_local_freedoom1"
+
+    wad = project / "wads" / dataset.WAD_NAMES[0]
+    monkeypatch.delenv("DOOM_WAD", raising=False)
+    monkeypatch.setattr(dataset, "_in_folder", lambda folder: wad if folder == wad.parent else None)
+    assert dataset.find_wad() == wad
 
 
 def test_wad_level_with_one_subsector_and_no_bsp_nodes(tmp_path: Path) -> None:

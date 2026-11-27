@@ -4,7 +4,7 @@ Nothing is forced: the game reads the running engine's console variables (what t
 switches to the lit mode only when Lumen GI and reflections, hardware ray tracing and the skin cache are all
 on (see `missing_settings`); otherwise it keeps the unlit look. `DOOM_LIGHTING=unlit` forces the classic look,
 `DOOM_LIGHTING=lit` asks for the lit mode and logs one warning naming the missing settings when it cannot run.
-Needs the lit materials, which `doom.importer:main` creates next to the unlit ones.
+Needs the lit materials, which the editor's WAD importer creates next to the unlit ones.
 
 What lights the level:
 - every lit material emits a little of its texture, scaled by the sector light level, and Lumen bounces
@@ -76,7 +76,7 @@ def missing_settings() -> list[str]:
             if ue.KismetSystemLibrary.get_console_variable_int_value(name) != wanted
         ]
         if not _problems[0] and not _assets_ready():
-            _problems[0] = ["lit materials (run doom.importer:main in the editor)"]
+            _problems[0] = ["lit materials (import the selected WAD in the editor)"]
     return list(_problems[0])
 
 
